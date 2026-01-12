@@ -1,8 +1,8 @@
 {
-  "name": "svelte-select",
-  "version": "5.8.3",
-  "repository": "https://rob-balfre@github.com/rob-balfre/svelte-select.git",
-  "description": "A <Select> component for Svelte apps",
+  "name": "svelte-select-5",
+  "version": "6.0.0",
+  "repository": "https://github.com/Dbone29/svelte-select-5.git",
+  "description": "A <Select> component for Svelte 5 apps (fork of svelte-select)",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",

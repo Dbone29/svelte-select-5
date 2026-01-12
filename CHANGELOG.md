@@ -1,4 +1,20 @@
-# svelte-select changelog
+# svelte-select-5 changelog
+
+## 6.0.0 (Fork - Svelte 5)
+
+**BREAKING CHANGES:**
+- Requires Svelte 5
+- Slot names changed to camelCase (e.g., `clear-icon` → `clearIcon`)
+- Events changed from `on:event` to callback props (e.g., `on:select` → `onselect`)
+- Slots replaced with Svelte 5 snippets
+
+**Changes:**
+- Full migration to Svelte 5 runes ($state, $derived, $effect, $props, $bindable)
+- All examples updated to Svelte 5 syntax
+- Fixed build warnings (A11y, state capture)
+- This is a fork of [rob-balfre/svelte-select](https://github.com/rob-balfre/svelte-select)
+
+---
 
 ## 5.8.3
 

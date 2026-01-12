@@ -1,34 +1,23 @@
-<div align="center">
-  <img src="https://raw.githubusercontent.com/rob-balfre/svelte-select/master/svelte-select.png" alt="Svelte Select" width="150" />
-  <h1>Svelte Select</h1>
-</div>
+# svelte-select-5
 
-<div align="center">
-  <a href="https://npmjs.org/package/svelte-select">
-    <img src="https://badgen.now.sh/npm/v/svelte-select" alt="version" />
-  </a>
-  <a href="https://npmjs.org/package/svelte-select">
-    <img src="https://badgen.now.sh/npm/dm/svelte-select" alt="downloads" />
-  </a>
-</div>
-<div align="center">A select/autocomplete/typeahead Svelte component.</div>
+A select/autocomplete/typeahead component for **Svelte 5**.
 
-## Demos
-
-[💥 Examples of every prop, event, slot and more 💥](https://svelte-select-examples.vercel.app)
-
-[✨ REPL: Simple ✨](https://svelte.dev/repl/c3bbe052fdfc4e87a46ccd9091ee002b)
-
-[💃 REPL: Show me everything 🕺](https://svelte.dev/repl/3df87e32340e4e9e85bf371becae2af0)
+This is a fork of [svelte-select](https://github.com/rob-balfre/svelte-select) with full Svelte 5 support.
 
 ## Installation
 
 ```bash
-npm install svelte-select
+npm install svelte-select-5
 ```
 
-## Svelte 5
-I'm not currently using Svelte 5 in my day job or personal projects so might be a while before I tackle porting / upgrading to Svelte 5. Looking forward to it though, just need to find the time!
+## Svelte 5 Migration
+
+This fork has been fully migrated to Svelte 5:
+- Uses Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`, `$bindable`)
+- Slots replaced with snippets (e.g., `slot="clear-icon"` → `{#snippet clearIcon()}`)
+- Events use callback props (e.g., `on:select` → `onselect`)
+
+See [CHANGELOG.md](./CHANGELOG.md) for breaking changes.
 
 
 ## Upgrading Svelte Select
