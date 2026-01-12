@@ -19,7 +19,14 @@
     {#snippet list({ filteredItems })}
         <div class="custom-list">
             {#each filteredItems as item }
-                <span onclick={() => handleClick(item)}>{item.label}</span>
+                <span
+                    role="option"
+                    aria-selected={value?.some(v => v.value === item.value) ?? false}
+                    tabindex="0"
+                    onclick={() => handleClick(item)}
+                    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(item); }}>
+                    {item.label}
+                </span>
             {/each}
         </div>
     {/snippet}

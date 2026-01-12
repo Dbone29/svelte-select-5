@@ -60,7 +60,11 @@
                         class:active={activeIndex === index}
                         class:hover={hoverItemIndex === index}
                         {style}
+                        role="option"
+                        aria-selected={activeIndex === index}
+                        tabindex="0"
                         onclick={() => handleClick(index)}
+                        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(index); }}
                         onfocus={() => handleHover(index)}
                         onmouseover={() => handleHover(index)}>
                         Item: {filteredItems[index].label}, Index: #{index}

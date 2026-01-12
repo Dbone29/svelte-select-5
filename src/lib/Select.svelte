@@ -122,11 +122,11 @@
     let _inputAttributes = $state({});
     let isScrollingTimer;
 
-    // Floating UI config
+    // Floating UI config - using closure for listOffset to capture current value
     let _floatingConfig = {
         strategy: 'absolute',
         placement: 'bottom-start',
-        middleware: [offset(listOffset), flip(), shift()],
+        middleware: [offset(() => listOffset), flip(), shift()],
         autoUpdate: false,
     };
 
