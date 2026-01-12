@@ -1,5 +1,6 @@
 node_modules
 .DS_Store
+/dist
 /test/public/tests.js
 /test/public/tests.css
 /test/public/assets
