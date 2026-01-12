@@ -9,11 +9,13 @@
 </script>
 
 <Select {items}>
-    <div slot="clear-icon">❌</div>
+    {#snippet clearIcon()}
+        <div class="clear-icon">❌</div>
+    {/snippet}
 </Select>
 
 <style>
-    div {
+    .clear-icon {
         cursor: default;
     }
 </style>

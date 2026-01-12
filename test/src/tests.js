@@ -1,4 +1,4 @@
-import Select from '../../src/lib/Select.svelte';
+import SelectComponent from '../../src/lib/Select.svelte';
 import ParentContainer from './Select/ParentContainer.svelte'
 import {assert, test} from 'tape-modern';
 import SelectionSlotTest from './SelectionSlotTest.svelte';
@@ -15,6 +15,12 @@ import MultiItemColor from './MultiItemColor.svelte';
 import GroupHeaderNotSelectable from './GroupHeaderNotSelectable.svelte';
 import HoverItemIndexTest from './HoverItemIndexTest.svelte';
 import LoadOptionsGroup from './LoadOptionsGroup.svelte';
+import { createTestComponent } from './test-utils.js';
+
+// Wrapper for backward compatibility with Svelte 3 API
+function Select(options) {
+  return createTestComponent(SelectComponent, options);
+}
 
 function querySelectorClick(selector) {
   if (selector === '.svelte-select') {
@@ -30,8 +36,8 @@ function handleKeyboard(key) {
   return new Promise(f => setTimeout(f, 0));
 }
 
-function handleSet(component, data) {
-  component.$set(data);
+async function handleSet(component, data) {
+  await component.$set(data);
   return new Promise(f => setTimeout(f, 0));
 }
 

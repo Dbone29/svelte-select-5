@@ -10,5 +10,7 @@
 
 
 <Select {items} showChevron>
-    <div slot="chevron-icon">⬇️</div>
+    {#snippet chevronIcon({ listOpen })}
+        <div>{listOpen ? '⬆️' : '⬇️'}</div>
+    {/snippet}
 </Select>

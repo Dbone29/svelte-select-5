@@ -1,7 +1,7 @@
 import svelte from 'rollup-plugin-svelte';
-import resolve from 'rollup-plugin-node-resolve';
+import resolve from '@rollup/plugin-node-resolve';
 import css from 'rollup-plugin-css-only';
-import replace from 'rollup-plugin-replace';
+import replace from '@rollup/plugin-replace';
 
 export default [
     {
@@ -21,10 +21,12 @@ export default [
             css(),
             resolve({
                 browser: true,
-                exportConditions: ['development'],
+                exportConditions: ['svelte', 'development'],
+                dedupe: ['svelte'],
             }),
             replace({
-                'process.env.NODE_ENV': 'null',
+                preventAssignment: true,
+                'process.env.NODE_ENV': JSON.stringify('development'),
             }),
         ],
     },

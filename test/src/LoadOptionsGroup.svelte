@@ -9,8 +9,7 @@
         { value: 'ice-cream', label: 'Ice Cream', group: 'Sweet' },
     ];
 
-    export let filterText;
-    export let value = undefined;
+    let { filterText = $bindable(), value = $bindable(undefined) } = $props();
 
     async function loadOptions() {
         return items.filter((i) => i.label.toLowerCase().includes(filterText.toLowerCase()));

@@ -15,9 +15,9 @@
         });
     }
 
-    function handle(e) {
-        console.log(e.detail);
+    function handle(data) {
+        console.log(data);
     }
 </script>
 
-<Select on:loaded={handle} {loadOptions} />
+<Select onloaded={handle} {loadOptions} />

@@ -7,28 +7,20 @@
         { value: 'three', label: 'Three' },
     ];
 
-    let value = [];
-    let checked = [];
-    let isChecked = {};
+    let checked = $state([]);
+    let value = $derived(checked.map((c) => items.find((i) => i.value === c)));
+    let isChecked = $derived.by(() => {
+        const result = {};
+        checked.forEach((c) => (result[c] = true));
+        return result;
+    });
 
-    $: computeValue(checked);
-    $: computeIsChecked(checked);
-
-    function computeIsChecked() {
-        isChecked = {};
-        checked.forEach((c) => (isChecked[c] = true));
-    }
-
-    function computeValue() {
-        value = checked.map((c) => items.find((i) => i.value === c));
-    }
-
-    function handleChange(e) {
-        if (e.type === 'clear' && Array.isArray(e.detail)) checked = [];
+    function handleChange(e, type) {
+        if (type === 'clear' && Array.isArray(e)) checked = [];
         else
-            checked.includes(e.detail.value)
-                ? (checked = checked.filter((i) => i != e.detail.value))
-                : (checked = [...checked, e.detail.value]);
+            checked.includes(e.value)
+                ? (checked = checked.filter((i) => i != e.value))
+                : (checked = [...checked, e.value]);
     }
 </script>
 
@@ -38,14 +30,16 @@
     multiple={true}
     filterSelectedItems={false}
     closeListOnChange={false}
-    on:select={handleChange}
-    on:clear={handleChange}>
-    <div class="item" slot="item" let:item>
-        <label for={item.value}>
-            <input type="checkbox" id={item.value} bind:checked={isChecked[item.value]} />
-            {item.label}
-        </label>
-    </div>
+    onselect={(e) => handleChange(e, 'select')}
+    onclear={(e) => handleChange(e, 'clear')}>
+    {#snippet item({ item })}
+        <div class="item">
+            <label for={item.value}>
+                <input type="checkbox" id={item.value} checked={isChecked[item.value]} />
+                {item.label}
+            </label>
+        </div>
+    {/snippet}
 </Select>
 
 <style>

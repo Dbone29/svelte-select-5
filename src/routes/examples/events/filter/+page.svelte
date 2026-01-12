@@ -7,10 +7,10 @@
         { value: 'three', label: 'Three' },
     ];
 
-    function handle(e) {
-        console.log(e.detail);
+    function handle(filteredItems) {
+        console.log(filteredItems);
     }
 </script>
 
-<Select {items} on:filter={handle} />
+<Select {items} onfilter={handle} />
 

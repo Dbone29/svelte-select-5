@@ -10,5 +10,7 @@
 
 
 <Select {items} multiple>
-    <div slot="multi-clear-icon">❌</div>
+    {#snippet multiClearIcon()}
+        <div>❌</div>
+    {/snippet}
 </Select>

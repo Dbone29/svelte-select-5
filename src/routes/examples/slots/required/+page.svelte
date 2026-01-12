@@ -10,9 +10,11 @@
 
 
 <Select {items} required>
-    <div class="required" slot="required">
-        REQUIRED
-    </div>
+    {#snippet requiredSlot({ value })}
+        <div class="required">
+            REQUIRED
+        </div>
+    {/snippet}
 </Select>
 
 <style>

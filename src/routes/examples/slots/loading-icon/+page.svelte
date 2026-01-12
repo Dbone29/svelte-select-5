@@ -9,11 +9,13 @@
 </script>
 
 <Select {items} loading>
-    <div slot="loading-icon">★</div>
+    {#snippet loadingIcon()}
+        <div class="spin">★</div>
+    {/snippet}
 </Select>
 
 <style>
-    div {
+    .spin {
         animation: rotate 0.75s linear infinite;
         transform-origin: center center;
         transform: none;

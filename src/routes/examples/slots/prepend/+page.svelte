@@ -10,11 +10,13 @@
 
 
 <Select {items}>
-    <div slot="prepend">💪</div>
+    {#snippet prepend()}
+        <div class="prepend-icon">💪</div>
+    {/snippet}
 </Select>
 
 <style>
-    div {
+    .prepend-icon {
         margin-right: 5px;
     }
 </style>

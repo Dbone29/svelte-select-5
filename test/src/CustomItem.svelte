@@ -1,12 +1,7 @@
 <script>
-    export let active = false;
-    export let first = false;
-    export let hover = false;
-    export let item = undefined;
+    let { active = false, first = false, hover = false, item = undefined } = $props();
 
-    let itemClasses = '';
-
-    $: {
+    let itemClasses = $derived.by(() => {
         const classes = [];
         if (active) {
             classes.push('active');
@@ -17,8 +12,8 @@
         if (hover) {
             classes.push('hover');
         }
-        itemClasses = classes.join(' ');
-    }
+        return classes.join(' ');
+    });
 </script>
 
 <div class="customItem {itemClasses}">

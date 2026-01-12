@@ -5,11 +5,13 @@
 </script>
 
 <Select {items}>
-    <div slot="empty">Nothing to see here...</div>
+    {#snippet empty()}
+        <div class="empty-message">Nothing to see here...</div>
+    {/snippet}
 </Select>
 
 <style>
-    div {
+    .empty-message {
         padding: 10px;
         text-align: center;
     }
