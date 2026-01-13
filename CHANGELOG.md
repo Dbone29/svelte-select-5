@@ -1,5 +1,9 @@
 # svelte-select-5 changelog
 
+## 6.1.3
+
+* Fixed `setValue()` creating unnecessary new arrays in multi-select mode, which could trigger reactivity loops
+
 ## 6.1.2
 
 **Bug Fixes:**

@@ -195,7 +195,11 @@
                 label: value,
             };
         } else if (multiple && Array.isArray(value) && value.length > 0) {
-            value = value.map((item) => (typeof item === 'string' ? { value: item, label: item } : item));
+            // Only transform if there are string items that need conversion
+            const hasStringItems = value.some(item => typeof item === 'string');
+            if (hasStringItems) {
+                value = value.map((item) => (typeof item === 'string' ? { value: item, label: item } : item));
+            }
         }
     }
 
