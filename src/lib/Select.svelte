@@ -286,12 +286,8 @@
     }
 
     function setupMulti() {
-        if (value) {
-            if (Array.isArray(value)) {
-                value = [...value];
-            } else {
-                value = [value];
-            }
+        if (value && !Array.isArray(value)) {
+            value = [value];
         }
     }
 
@@ -389,9 +385,24 @@
         if (!value || (multiple ? value.some((selection) => !selection || !selection[itemId]) : !value[itemId])) return;
 
         if (Array.isArray(value)) {
-            value = value.map((selection) => findItem(selection) || selection);
+            // Only update if items actually changed
+            let needsUpdate = false;
+            const newValue = value.map((selection) => {
+                const found = findItem(selection);
+                if (found && found !== selection) {
+                    needsUpdate = true;
+                    return found;
+                }
+                return selection;
+            });
+            if (needsUpdate) {
+                value = newValue;
+            }
         } else {
-            value = findItem() || value;
+            const found = findItem();
+            if (found && found !== value) {
+                value = found;
+            }
         }
     }
 

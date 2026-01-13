@@ -1,5 +1,10 @@
 # svelte-select-5 changelog
 
+## 6.1.4
+
+* Fixed infinite loop with `multiple=true`: `setupMulti()` no longer creates unnecessary array copies
+* Fixed `updateValueDisplay()` creating new arrays even when no items changed
+
 ## 6.1.3
 
 * Fixed `setValue()` creating unnecessary new arrays in multi-select mode, which could trigger reactivity loops
