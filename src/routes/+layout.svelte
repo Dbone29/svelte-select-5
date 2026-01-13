@@ -6,10 +6,10 @@
 
     let { children } = $props();
 
-    const _props = import.meta.glob('./examples/props/*/*.svelte', { as: 'raw' });
-    const _slots = import.meta.glob('./examples/slots/*/*.svelte', { as: 'raw' });
-    const _events = import.meta.glob('./examples/events/*/*.svelte', { as: 'raw' });
-    const _advanced = import.meta.glob('./examples/advanced/*/*.svelte', { as: 'raw' });
+    const _props = import.meta.glob('./examples/props/*/*.svelte', { query: '?raw', import: 'default' });
+    const _slots = import.meta.glob('./examples/slots/*/*.svelte', { query: '?raw', import: 'default' });
+    const _events = import.meta.glob('./examples/events/*/*.svelte', { query: '?raw', import: 'default' });
+    const _advanced = import.meta.glob('./examples/advanced/*/*.svelte', { query: '?raw', import: 'default' });
 
     let source = $state(null);
     let showNav = $state(false);
@@ -54,7 +54,7 @@
         advanced: buildLinks(_advanced),
     });
 
-    let route = $derived($page.route.id.substring(1));
+    let route = $derived($page.route.id?.substring(1) ?? '');
 
     $effect(() => {
         if ($navigating) showNav = false;

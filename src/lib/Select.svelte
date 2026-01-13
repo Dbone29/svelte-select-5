@@ -1,4 +1,39 @@
 <script>
+    /**
+     * @typedef {Object} SelectItem
+     * @property {string|number} [value] - The value identifier for the item
+     * @property {string} [label] - Display label (or use custom label prop)
+     * @property {boolean} [selectable] - Whether the item can be selected
+     * @property {boolean} [isCreator] - Whether this is a "create new" item
+     * @property {string} [groupValue] - Group identifier for grouped items
+     * @property {string} [groupHeader] - Group header display text
+     * @property {*} [key: string] - Additional custom properties
+     */
+
+    /**
+     * @typedef {SelectItem|SelectItem[]|null|undefined} SelectValue
+     */
+
+    /**
+     * @typedef {Object} FloatingConfig
+     * @property {'absolute'|'fixed'} [strategy] - Positioning strategy
+     * @property {'bottom-start'|'bottom-end'|'top-start'|'top-end'} [placement] - Dropdown placement
+     */
+
+    /**
+     * @callback ItemFilterFn
+     * @param {string} label - The item's label value
+     * @param {string} filterText - Current filter text
+     * @param {SelectItem} item - The item being filtered
+     * @returns {boolean} - Whether the item matches the filter
+     */
+
+    /**
+     * @callback LoadOptionsFn
+     * @param {string} filterText - Current filter text
+     * @returns {Promise<SelectItem[]>} - Promise resolving to items
+     */
+
     import { onDestroy, onMount } from 'svelte';
     import { offset, flip, shift } from 'svelte-floating-ui/dom';
     import { createFloatingActions } from 'svelte-floating-ui';

@@ -1,5 +1,21 @@
 # svelte-select-5 changelog
 
+## 6.1.0
+
+**Dependencies:**
+* Updated to Vite 7, SvelteKit 2.49, @sveltejs/vite-plugin-svelte 6
+* Updated all Rollup plugins to latest versions
+* Updated other devDependencies (release-it 19, fuse.js 7, sirv-cli 3, cross-env 10)
+
+**TypeScript:**
+* Added JSDoc type definitions for better IDE support
+* New exported types: `SelectItem`, `SelectValue`, `FloatingConfig`, `ItemFilterFn`, `LoadOptionsFn`
+* Added full type documentation to `filter.js` and `get-items.js`
+
+**Fixes:**
+* Fixed Vite 7 deprecation warnings (`import.meta.glob` syntax updated)
+* Fixed potential null error in layout route handling
+
 ## 6.0.3
 
 * `justValue` is now settable - setting `justValue` will automatically update `value` by finding the matching item(s)

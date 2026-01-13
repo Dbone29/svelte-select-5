@@ -1,3 +1,31 @@
+/**
+ * @typedef {Object} SelectItem
+ * @property {string|number} [value]
+ * @property {string} [label]
+ * @property {*} [key: string]
+ */
+
+/**
+ * @typedef {Object} FilterOptions
+ * @property {Function|undefined} loadOptions - Async load function
+ * @property {string} filterText - Current filter text
+ * @property {(SelectItem|string)[]} items - Items to filter
+ * @property {boolean} multiple - Multi-select mode
+ * @property {SelectItem|SelectItem[]|null} value - Current value
+ * @property {string} itemId - Property name for item ID
+ * @property {string|undefined} groupBy - Property name for grouping
+ * @property {boolean} filterSelectedItems - Whether to filter out selected items
+ * @property {(label: string, filterText: string, item: SelectItem) => boolean} itemFilter - Filter function
+ * @property {(items: (string|SelectItem)[]) => SelectItem[]} convertStringItemsToObjects - Converter function
+ * @property {(items: SelectItem[]) => SelectItem[]} filterGroupedItems - Group filter function
+ * @property {string} label - Property name for label
+ */
+
+/**
+ * Filters items based on filter text and selection state
+ * @param {FilterOptions} options - Filter options
+ * @returns {SelectItem[]} Filtered items
+ */
 export default function filter({
     loadOptions,
     filterText,
