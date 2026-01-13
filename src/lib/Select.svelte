@@ -13,13 +13,15 @@
     // Props with $props() rune
     let {
         // Bindable props (two-way binding)
-        justValue = $bindable(null),
-        container = $bindable(undefined),
-        input = $bindable(undefined),
+        // Note: Props that can be undefined don't have fallback values
+        // to allow bind:prop={undefined} (Svelte 5 requirement)
+        justValue = $bindable(),
+        container = $bindable(),
+        input = $bindable(),
         focused = $bindable(false),
-        value = $bindable(null),
+        value = $bindable(),
         filterText = $bindable(''),
-        items = $bindable(null),
+        items = $bindable(),
         loading = $bindable(false),
         listOpen = $bindable(false),
         hoverItemIndex = $bindable(0),
@@ -120,6 +122,7 @@
     let isScrolling = $state(false);
     let prefloat = $state(true);
     let _inputAttributes = $state({});
+    let prevJustValue = $state(undefined);
     let isScrollingTimer;
 
     // Floating UI config - using closure for listOffset to capture current value
@@ -715,6 +718,26 @@
 
     $effect(() => {
         justValue = computeJustValue();
+    });
+
+    // Handle external changes to justValue (allows setting value via justValue)
+    $effect(() => {
+        const computed = computeJustValue();
+        const isExternalChange = justValue !== prevJustValue &&
+            JSON.stringify(justValue) !== JSON.stringify(computed);
+
+        if (isExternalChange && items) {
+            if (multiple) {
+                value = justValue
+                    ? items.filter(item => justValue.includes(item[itemId]))
+                    : null;
+            } else {
+                value = justValue != null
+                    ? items.find(item => item[itemId] === justValue) ?? null
+                    : null;
+            }
+        }
+        prevJustValue = justValue;
     });
 
     $effect(() => {

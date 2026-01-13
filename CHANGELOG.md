@@ -1,5 +1,13 @@
 # svelte-select-5 changelog
 
+## 6.0.3
+
+* `justValue` is now settable - setting `justValue` will automatically update `value` by finding the matching item(s)
+
+## 6.0.2
+
+* Fixed `props_invalid_value` error when using `bind:value={undefined}` - removed fallback values from bindable props that can be undefined
+
 ## 6.0.1
 
 * Fixed npm package missing compiled files (svelte-package was not run before publish)

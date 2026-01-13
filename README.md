@@ -36,7 +36,7 @@ List position and floating is powered by `floating-ui`, see their [package-entry
 | ---------------------- | --------- | --------------- | -------------------------------------------------------------- |
 | items                  | `any[]`   | `[]`            | Array of items available to display / filter                   |
 | value                  | `any`     | `null`          | Selected value(s)                                              |
-| justValue              | `any`     | `null`          | **READ-ONLY** Selected value(s) excluding container object     |
+| justValue              | `any`     | `null`          | Selected value(s) IDs only. Can be set to update `value`.      |
 | itemId                 | `string`  | `value`         | Override default identifier                                    |
 | label                  | `string`  | `label`         | Override default label                                         |
 | id                     | `string`  | `null`          | id attr for input field                                        |
