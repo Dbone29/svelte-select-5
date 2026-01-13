@@ -1,5 +1,12 @@
 # svelte-select-5 changelog
 
+## 6.1.1
+
+* Added `readonlyValue` prop - read-only version of `value` (full objects)
+* Added `readonlyId` prop - read-only version of `justValue` (IDs only)
+
+These props allow reading the current selection without the two-way binding behavior. External changes to these props are ignored.
+
 ## 6.1.0
 
 **Dependencies:**

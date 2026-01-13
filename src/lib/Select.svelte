@@ -61,6 +61,10 @@
         listOpen = $bindable(false),
         hoverItemIndex = $bindable(0),
 
+        // Read-only bindable props (output only - external changes are ignored)
+        readonlyValue = $bindable(),
+        readonlyId = $bindable(),
+
         // Function props
         filter = _filter,
         getItems = _getItems,
@@ -773,6 +777,12 @@
             }
         }
         prevJustValue = justValue;
+    });
+
+    // Read-only props - always reflect current state, external changes are ignored
+    $effect(() => {
+        readonlyValue = value;
+        readonlyId = computeJustValue();
     });
 
     $effect(() => {
