@@ -760,12 +760,17 @@
     });
 
     // Handle external changes to justValue (allows setting value via justValue)
+    // Also handles case where justValue is set before items are loaded
     $effect(() => {
         const computed = computeJustValue();
         const isExternalChange = justValue !== prevJustValue &&
             JSON.stringify(justValue) !== JSON.stringify(computed);
 
-        if (isExternalChange && items) {
+        // Update value if: external justValue change, OR items loaded while justValue is set but value is empty
+        const needsValueUpdate = isExternalChange ||
+            (items && justValue != null && !value && JSON.stringify(justValue) !== JSON.stringify(computed));
+
+        if (needsValueUpdate && items) {
             if (multiple) {
                 value = justValue
                     ? items.filter(item => justValue.includes(item[itemId]))
@@ -782,6 +787,9 @@
     // Read-only props - always reflect current state, external changes are ignored
     $effect(() => {
         readonlyValue = value;
+    });
+
+    $effect(() => {
         readonlyId = computeJustValue();
     });
 
@@ -834,6 +842,8 @@
     });
 
     onDestroy(() => {
+        clearTimeout(timeout);
+        clearTimeout(isScrollingTimer);
         list?.remove();
     });
 </script>

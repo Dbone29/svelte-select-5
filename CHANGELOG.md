@@ -1,5 +1,12 @@
 # svelte-select-5 changelog
 
+## 6.1.2
+
+**Bug Fixes:**
+* Fixed memory leak: debounce and scroll timers are now cleared on component destroy
+* Fixed edge case where `justValue` set before `items` load would not update `value`
+* Optimized `readonlyValue`/`readonlyId` effects for better performance
+
 ## 6.1.1
 
 * Added `readonlyValue` prop - read-only version of `value` (full objects)
