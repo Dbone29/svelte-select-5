@@ -1,5 +1,9 @@
 # svelte-select-5 changelog
 
+## 6.0.1
+
+* Fixed npm package missing compiled files (svelte-package was not run before publish)
+
 ## 6.0.0 (Fork - Svelte 5)
 
 **BREAKING CHANGES:**
