@@ -163,6 +163,7 @@
     let _inputAttributes = $state({});
     let prevJustValue = $state(undefined);
     let isScrollingTimer;
+    let autoUpdateInitialized = false;
 
     // Floating UI config - using closure for listOffset to capture current value
     let _floatingConfig = {
@@ -853,7 +854,8 @@
     });
 
     $effect(() => {
-        if (container && floatingConfig?.autoUpdate === undefined) {
+        if (container && !autoUpdateInitialized && floatingConfig?.autoUpdate === undefined) {
+            autoUpdateInitialized = true;
             _floatingConfig.autoUpdate = true;
         }
     });

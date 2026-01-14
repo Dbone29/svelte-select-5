@@ -1,5 +1,11 @@
 # svelte-select-5 changelog
 
+## 6.1.6
+
+* Fixed Floating UI `autoUpdate` causing infinite loops
+  - The effect that enables `autoUpdate` now uses a flag to prevent re-execution
+  - Prevents `tick()` from triggering recursive effect updates
+
 ## 6.1.5
 
 * Fixed Svelte 5 proxy equality issue in `updateValueDisplay()` that caused infinite loops
