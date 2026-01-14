@@ -1,5 +1,11 @@
 # svelte-select-5 changelog
 
+## 6.1.5
+
+* Fixed Svelte 5 proxy equality issue in `updateValueDisplay()` that caused infinite loops
+  - Svelte 5 `$state()` proxies have different identities than their targets
+  - Changed from reference comparison (`!==`) to property comparison (`JSON.stringify`)
+
 ## 6.1.4
 
 * Fixed infinite loop with `multiple=true`: `setupMulti()` no longer creates unnecessary array copies

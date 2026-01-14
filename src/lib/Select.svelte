@@ -385,13 +385,18 @@
         if (!value || (multiple ? value.some((selection) => !selection || !selection[itemId]) : !value[itemId])) return;
 
         if (Array.isArray(value)) {
-            // Only update if items actually changed
+            // Check if any value needs updating - compare properties, not references
+            // (Svelte 5 proxies have different identities than their targets)
             let needsUpdate = false;
             const newValue = value.map((selection) => {
                 const found = findItem(selection);
-                if (found && found !== selection) {
-                    needsUpdate = true;
-                    return found;
+                // Only update if found item has different properties (not just different reference)
+                if (found && found[itemId] === selection[itemId]) {
+                    // Same itemId - check if other properties differ using JSON comparison
+                    if (JSON.stringify(found) !== JSON.stringify(selection)) {
+                        needsUpdate = true;
+                        return found;
+                    }
                 }
                 return selection;
             });
@@ -400,8 +405,11 @@
             }
         } else {
             const found = findItem();
-            if (found && found !== value) {
-                value = found;
+            // Only update if found item has different properties
+            if (found && found[itemId] === value[itemId]) {
+                if (JSON.stringify(found) !== JSON.stringify(value)) {
+                    value = found;
+                }
             }
         }
     }
