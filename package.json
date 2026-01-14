@@ -1,6 +1,6 @@
 {
   "name": "svelte-select-5",
-  "version": "6.1.6",
+  "version": "6.1.7",
   "repository": "https://github.com/Dbone29/svelte-select-5.git",
   "description": "A <Select> component for Svelte 5 apps (fork of svelte-select)",
   "scripts": {
@@ -72,6 +72,6 @@
     "svelte": "^5.0.0"
   },
   "dependencies": {
-    "svelte-floating-ui": "^1.5.9"
+    "svelte-floating-ui": "^1.6.2"
   }
 }

@@ -1,5 +1,11 @@
 # svelte-select-5 changelog
 
+## 6.1.7
+
+* Updated `svelte-floating-ui` from 1.5.9 to 1.6.2
+  - v1.6.1+ has native Svelte 5 support (stores → runes migration)
+  - Fixes `autoUpdate` infinite loop issues (#14, #18 in upstream)
+
 ## 6.1.6
 
 * Fixed Floating UI `autoUpdate` causing infinite loops
