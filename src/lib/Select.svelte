@@ -763,24 +763,21 @@
         if (inputAttributes || !searchable) assignInputAttributes();
     });
 
+    // Consolidated: Multiple-mode effects
     $effect(() => {
-        if (multiple) setupMulti();
+        if (multiple) {
+            setupMulti();
+            if (value && value.length > 1) checkValueForDuplicates();
+        } else if (prev_multiple) {
+            setupSingle();
+        }
     });
 
+    // Consolidated: Value change effects
     $effect(() => {
-        if (prev_multiple && !multiple) setupSingle();
-    });
-
-    $effect(() => {
-        if (multiple && value && value.length > 1) checkValueForDuplicates();
-    });
-
-    $effect(() => {
-        if (value) dispatchSelectedItem();
-    });
-
-    $effect(() => {
-        if (!value && multiple && prev_value) {
+        if (value) {
+            dispatchSelectedItem();
+        } else if (prev_value) {
             oninput?.(value);
         }
     });
@@ -795,10 +792,6 @@
 
     $effect(() => {
         if (!multiple && listOpen && value && filteredItems) setValueIndexAsHoverIndex();
-    });
-
-    $effect(() => {
-        dispatchHover(hoverItemIndex);
     });
 
     $effect(() => {
@@ -853,10 +846,6 @@
     });
 
     $effect(() => {
-        if (!multiple && prev_value && !value) oninput?.(value);
-    });
-
-    $effect(() => {
         if (listOpen && filteredItems && !multiple && !value) checkHoverSelectable();
     });
 
@@ -868,24 +857,19 @@
         if (container && floatingConfig) floatingUpdate(Object.assign(_floatingConfig, floatingConfig));
     });
 
+    // Consolidated: List open effects
     $effect(() => {
         listMounted(list, listOpen);
+        if (listOpen) {
+            if (container && list) setListWidth();
+            if (input && !focused) handleFocus();
+        }
     });
 
+    // Consolidated: hoverItemIndex effects
     $effect(() => {
-        if (listOpen && container && list) setListWidth();
-    });
-
-    $effect(() => {
-        if (listOpen && multiple) hoverItemIndex = 0;
-    });
-
-    $effect(() => {
-        if (input && listOpen && !focused) handleFocus();
-    });
-
-    $effect(() => {
-        if (filterText) hoverItemIndex = 0;
+        if (filterText || (listOpen && multiple)) hoverItemIndex = 0;
+        dispatchHover(hoverItemIndex);
     });
 
     // Lifecycle

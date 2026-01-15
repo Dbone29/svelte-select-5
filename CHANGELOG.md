@@ -1,5 +1,16 @@
 # svelte-select-5 changelog
 
+## 6.2.1
+
+**Performance Optimization:**
+
+* Consolidated effects from 26 to 18 (8 fewer effects)
+  - Multiple-mode effects combined into one
+  - Value change effects combined into one
+  - List open effects combined into one
+  - hoverItemIndex effects combined into one
+* Less overhead from dependency tracking and scheduling
+
 ## 6.2.0
 
 **Stability Improvements:**
