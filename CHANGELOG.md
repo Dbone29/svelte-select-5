@@ -1,5 +1,12 @@
 # svelte-select-5 changelog
 
+## 6.1.9
+
+* Improved synchronization of `readonlyValue` and `readonlyId` props
+  - Changed from `$effect` to `$effect.pre` for earlier update timing
+  - Consolidated two separate effects into one for better consistency
+  - Fixes potential race conditions when value is cleared
+
 ## 6.1.8
 
 * Disabled `autoUpdate` by default to fix infinite loop caused by `svelte-floating-ui` internal `tick()` calls

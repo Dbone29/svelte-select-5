@@ -808,11 +808,9 @@
     });
 
     // Read-only props - always reflect current state, external changes are ignored
-    $effect(() => {
+    // Using $effect.pre to update before DOM render for better synchronization
+    $effect.pre(() => {
         readonlyValue = value;
-    });
-
-    $effect(() => {
         readonlyId = computeJustValue();
     });
 
