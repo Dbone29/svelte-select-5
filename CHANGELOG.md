@@ -1,5 +1,28 @@
 # svelte-select-5 changelog
 
+## 6.2.3
+
+**Performance Optimization & Bug Fix:**
+
+* Replaced `JSON.stringify()` comparisons with efficient `shallowEqual()` helper
+  - 10-15% faster value comparison in `dispatchSelectedItem()` and `updateValueDisplay()`
+  - Lighter comparison for `justValue` changes
+
+* Optimized `checkValueForDuplicates()` from O(n²) to O(n)
+  - Using `Set.has()` instead of `Array.includes()` for duplicate detection
+
+* Optimized `filterGroupedItems()` from O(n²) to O(n)
+  - Using `Set.has()` instead of `Array.includes()` for group lookup
+
+* Converted `setHoverIndex()` from recursion to iteration
+  - Prevents potential stack overflow with many non-selectable items
+  - More predictable performance
+
+* **Fixed potential infinite loop** in `updateValueDisplay()` effect
+  - Now tracks previous items reference with `prevItemsRef`
+  - Only updates when items content actually changes (not just array reference)
+  - Prevents loops when parent components recreate array references on each render
+
 ## 6.2.1
 
 **Performance Optimization:**

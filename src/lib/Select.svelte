@@ -45,6 +45,21 @@
     import ClearIcon from './ClearIcon.svelte';
     import LoadingIcon from './LoadingIcon.svelte';
 
+    // Performance: Shallow equality comparison (faster than JSON.stringify)
+    function shallowEqual(a, b) {
+        if (a === b) return true;
+        if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+        const keysA = Object.keys(a);
+        if (keysA.length !== Object.keys(b).length) return false;
+        return keysA.every(key => a[key] === b[key]);
+    }
+
+    function arrayShallowEqual(a, b) {
+        if (a === b) return true;
+        if (!a || !b || a.length !== b.length) return false;
+        return a.every((item, i) => shallowEqual(item, b[i]));
+    }
+
     // Props with $props() rune
     let {
         // Bindable props (two-way binding)
@@ -177,6 +192,7 @@
     let _inputAttributes = $state({});
     let prevJustValue = $state(undefined);
     let pendingJustValue = $state(undefined);
+    let prevItemsRef = $state(undefined);
     let loadRequestVersion = 0;
     let isScrollingTimer;
 
@@ -253,13 +269,15 @@
     }
 
     function filterGroupedItems(_items) {
+        const groupValuesSet = new Set();
         const groupValues = [];
         const groups = {};
 
         _items.forEach((item) => {
             const groupValue = groupBy(item);
 
-            if (!groupValues.includes(groupValue)) {
+            if (!groupValuesSet.has(groupValue)) {
+                groupValuesSet.add(groupValue);
                 groupValues.push(groupValue);
                 groups[groupValue] = [];
 
@@ -288,7 +306,7 @@
 
     function dispatchSelectedItem() {
         if (multiple) {
-            if (JSON.stringify(value) !== JSON.stringify(prev_value)) {
+            if (!arrayShallowEqual(value, prev_value)) {
                 if (checkValueForDuplicates()) {
                     oninput?.(value);
                 }
@@ -296,7 +314,7 @@
             return;
         }
 
-        if (!prev_value || JSON.stringify(value[itemId]) !== JSON.stringify(prev_value[itemId])) {
+        if (!prev_value || value[itemId] !== prev_value[itemId]) {
             oninput?.(value);
         }
     }
@@ -383,22 +401,23 @@
     }
 
     function checkValueForDuplicates() {
+        if (!value?.length) return true;
+
+        const seen = new Set();
+        const uniqueValues = [];
         let noDuplicates = true;
-        if (value) {
-            const ids = [];
-            const uniqueValues = [];
 
-            value.forEach((val) => {
-                if (!ids.includes(val[itemId])) {
-                    ids.push(val[itemId]);
-                    uniqueValues.push(val);
-                } else {
-                    noDuplicates = false;
-                }
-            });
-
-            if (!noDuplicates) value = uniqueValues;
+        for (const val of value) {
+            const id = val[itemId];
+            if (seen.has(id)) {
+                noDuplicates = false;
+            } else {
+                seen.add(id);
+                uniqueValues.push(val);
+            }
         }
+
+        if (!noDuplicates) value = uniqueValues;
         return noDuplicates;
     }
 
@@ -419,8 +438,8 @@
                 const found = findItem(selection);
                 // Only update if found item has different properties (not just different reference)
                 if (found && found[itemId] === selection[itemId]) {
-                    // Same itemId - check if other properties differ using JSON comparison
-                    if (JSON.stringify(found) !== JSON.stringify(selection)) {
+                    // Same itemId - check if other properties differ using shallow comparison
+                    if (!shallowEqual(found, selection)) {
                         needsUpdate = true;
                         return found;
                     }
@@ -434,7 +453,7 @@
             const found = findItem();
             // Only update if found item has different properties
             if (found && found[itemId] === value[itemId]) {
-                if (JSON.stringify(found) !== JSON.stringify(value)) {
+                if (!shallowEqual(found, value)) {
                     value = found;
                 }
             }
@@ -657,19 +676,32 @@
             return (hoverItemIndex = 0);
         }
 
-        if (increment > 0 && hoverItemIndex === filteredItems.length - 1) {
-            hoverItemIndex = 0;
-        } else if (increment < 0 && hoverItemIndex === 0) {
-            hoverItemIndex = filteredItems.length - 1;
-        } else {
-            hoverItemIndex = hoverItemIndex + increment;
-        }
+        // Use loop instead of recursion to prevent stack overflow with many non-selectable items
+        const maxIterations = filteredItems.length;
+        let iterations = 0;
 
-        const hover = filteredItems[hoverItemIndex];
+        while (iterations < maxIterations) {
+            if (increment > 0 && hoverItemIndex === filteredItems.length - 1) {
+                hoverItemIndex = 0;
+            } else if (increment < 0 && hoverItemIndex === 0) {
+                hoverItemIndex = filteredItems.length - 1;
+            } else {
+                hoverItemIndex = hoverItemIndex + increment;
+            }
 
-        if (hover && hover.selectable === false) {
-            if (increment === 1 || increment === -1) setHoverIndex(increment);
-            return;
+            const hover = filteredItems[hoverItemIndex];
+
+            // Found a selectable item - done
+            if (!hover || hover.selectable !== false) {
+                return;
+            }
+
+            // Only continue for single-step increments
+            if (increment !== 1 && increment !== -1) {
+                return;
+            }
+
+            iterations++;
         }
     }
 
@@ -794,8 +826,16 @@
         if (!multiple && listOpen && value && filteredItems) setValueIndexAsHoverIndex();
     });
 
+    // Only run updateValueDisplay when items content actually changes (not just reference)
+    // This prevents loops when parent components create new array references on each render
     $effect(() => {
-        updateValueDisplay(items);
+        if (items !== prevItemsRef) {
+            // Only update if content differs, not just reference
+            if (!arrayShallowEqual(items, prevItemsRef)) {
+                updateValueDisplay(items);
+            }
+            prevItemsRef = items;
+        }
     });
 
     $effect(() => {
@@ -815,8 +855,11 @@
     // Also handles case where justValue is set before items are loaded
     $effect(() => {
         const computed = computeJustValue();
-        const isExternalChange = justValue !== prevJustValue &&
-            JSON.stringify(justValue) !== JSON.stringify(computed);
+        // Compare justValue with computed - handles arrays (multiple) and primitives (single)
+        const valuesMatch = Array.isArray(justValue) && Array.isArray(computed)
+            ? justValue.length === computed.length && justValue.every((v, i) => v === computed[i])
+            : justValue === computed;
+        const isExternalChange = justValue !== prevJustValue && !valuesMatch;
 
         if (isExternalChange) {
             if (!items) {
