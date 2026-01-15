@@ -151,6 +151,20 @@
         requiredSlot: requiredSlotSnippet = undefined,
     } = $props();
 
+    // Prop validation (runs once on init)
+    if (typeof itemId !== 'string') {
+        console.warn('[svelte-select-5] itemId must be a string, using "value"');
+        itemId = 'value';
+    }
+    if (typeof label !== 'string') {
+        console.warn('[svelte-select-5] label must be a string, using "label"');
+        label = 'label';
+    }
+    if (loadOptions !== undefined && typeof loadOptions !== 'function') {
+        console.warn('[svelte-select-5] loadOptions must be a function');
+        loadOptions = undefined;
+    }
+
     // Internal state
     let timeout;
     let activeValue = $state(undefined);
@@ -162,6 +176,8 @@
     let prefloat = $state(true);
     let _inputAttributes = $state({});
     let prevJustValue = $state(undefined);
+    let pendingJustValue = $state(undefined);
+    let loadRequestVersion = 0;
     let isScrollingTimer;
 
     // Floating UI config - using closure for listOffset to capture current value
@@ -319,7 +335,9 @@
 
         if (loadOptions) {
             debounce(async function () {
+                const currentVersion = ++loadRequestVersion;
                 loading = true;
+
                 let res = await getItems({
                     dispatch: (event, data) => {
                         if (event === 'error') onerror?.(data);
@@ -329,6 +347,11 @@
                     convertStringItemsToObjects,
                     filterText,
                 });
+
+                // Ignore stale responses from earlier requests
+                if (currentVersion !== loadRequestVersion) {
+                    return;
+                }
 
                 if (res) {
                     loading = res.loading;
@@ -351,8 +374,12 @@
     }
 
     function computeJustValue() {
-        if (multiple) return value ? value.map((item) => item[itemId]) : null;
-        return value ? value[itemId] : value;
+        if (!value) return multiple ? null : undefined;
+        if (multiple) {
+            return value.map((item) => item?.[itemId]).filter(id => id !== undefined);
+        }
+        const id = value[itemId];
+        return id !== undefined ? id : undefined;
     }
 
     function checkValueForDuplicates() {
@@ -782,6 +809,15 @@
         justValue = computeJustValue();
     });
 
+    // Helper function to resolve justValue to value
+    function resolveJustValue(jv) {
+        if (multiple) {
+            value = jv ? items.filter(item => jv.includes(item[itemId])) : null;
+        } else {
+            value = jv != null ? items.find(item => item[itemId] === jv) ?? null : null;
+        }
+    }
+
     // Handle external changes to justValue (allows setting value via justValue)
     // Also handles case where justValue is set before items are loaded
     $effect(() => {
@@ -789,21 +825,23 @@
         const isExternalChange = justValue !== prevJustValue &&
             JSON.stringify(justValue) !== JSON.stringify(computed);
 
-        // Update value if: external justValue change, OR items loaded while justValue is set but value is empty
-        const needsValueUpdate = isExternalChange ||
-            (items && justValue != null && !value && JSON.stringify(justValue) !== JSON.stringify(computed));
-
-        if (needsValueUpdate && items) {
-            if (multiple) {
-                value = justValue
-                    ? items.filter(item => justValue.includes(item[itemId]))
-                    : null;
+        if (isExternalChange) {
+            if (!items) {
+                // Items not loaded yet - save for later
+                pendingJustValue = justValue;
             } else {
-                value = justValue != null
-                    ? items.find(item => item[itemId] === justValue) ?? null
-                    : null;
+                // Items available - resolve immediately
+                resolveJustValue(justValue);
+                pendingJustValue = undefined;
             }
         }
+
+        // When items load and we have a pending justValue, resolve it
+        if (items && pendingJustValue !== undefined && !value) {
+            resolveJustValue(pendingJustValue);
+            pendingJustValue = undefined;
+        }
+
         prevJustValue = justValue;
     });
 

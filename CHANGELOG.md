@@ -1,5 +1,17 @@
 # svelte-select-5 changelog
 
+## 6.2.0
+
+**Stability Improvements:**
+
+* **justValue before items**: Added `pendingJustValue` state to properly handle cases where `justValue` is set before `items` are loaded. The value is now saved and resolved once items become available.
+
+* **Async race condition fix**: Added request version counter to `setupFilterText()` to ignore stale responses from earlier requests when user types quickly.
+
+* **Prop validation**: Added runtime validation for critical props (`itemId`, `label`, `loadOptions`) with console warnings and safe fallbacks.
+
+* **computeJustValue() type safety**: Improved return type handling when `value[itemId]` is undefined - now correctly returns `undefined` instead of the value object.
+
 ## 6.1.9
 
 * Improved synchronization of `readonlyValue` and `readonlyId` props
