@@ -1,5 +1,11 @@
 # svelte-select-5 changelog
 
+## 6.1.8
+
+* Disabled `autoUpdate` by default to fix infinite loop caused by `svelte-floating-ui` internal `tick()` calls
+  - The effect that enabled `autoUpdate` has been removed
+  - Users can still enable it manually via `floatingConfig={{ autoUpdate: true }}` if needed
+
 ## 6.1.7
 
 * Updated `svelte-floating-ui` from 1.5.9 to 1.6.2
