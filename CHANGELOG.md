@@ -1,5 +1,26 @@
 # svelte-select-5 changelog
 
+## 6.2.5
+
+**Bug Fixes:**
+
+* Fixed null reference in `updateValueDisplay()` when items contain null/undefined
+* Fixed hoverIndex reset race condition breaking keyboard navigation in multiple mode
+* Removed manual DOM cleanup in onDestroy (Svelte handles it)
+* Added array type validation in filter.js and get-items.js
+
+**Performance:**
+
+* Optimized items comparison using length + first/last IDs instead of deep comparison
+* Filter now uses Set for O(1) duplicate checking instead of O(n)
+
+**Accessibility:**
+
+* Added proper ARIA roles (`listbox`, `option` with `aria-selected`)
+* Added `aria-hidden`, `focusable`, `role` attributes to LoadingIcon
+* Added `prefers-reduced-motion` support to LoadingIcon animation
+* Added `will-change: transform` to LoadingIcon for GPU optimization
+
 ## 6.2.4
 
 **Bug Fix:**

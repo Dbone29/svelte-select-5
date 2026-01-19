@@ -44,17 +44,21 @@ export default function filter({
     if (loadOptions && items) return items;
     if (!items) return [];
 
-    if (items && items.length > 0 && typeof items[0] !== 'object') {
+    if (items && items.length > 0 && (typeof items[0] === 'string' || typeof items[0] === 'number')) {
         items = convertStringItemsToObjects(items);
     }
+
+    // Pre-compute selected IDs Set for O(1) lookup instead of O(n) per item
+    const selectedIds = multiple && Array.isArray(value) && value.length > 0 && filterSelectedItems
+        ? new Set(value.map(v => v?.[itemId]))
+        : null;
 
     let filterResults = items.filter((item) => {
         let matchesFilter = itemFilter(item[label] ?? '', filterText, item);
 
         // In multi-select mode, optionally exclude already-selected items
-        if (matchesFilter && multiple && value?.length && filterSelectedItems) {
-            const isAlreadySelected = value.some((selected) => selected[itemId] === item[itemId]);
-            matchesFilter = !isAlreadySelected;
+        if (matchesFilter && selectedIds) {
+            matchesFilter = !selectedIds.has(item[itemId]);
         }
 
         return matchesFilter;

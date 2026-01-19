@@ -37,11 +37,17 @@ export default async function getItems({ dispatch, loadOptions, convertStringIte
         return undefined;
     }
 
-    if (!loadedItems || loadedItems.cancelled) {
+    if (!loadedItems || (typeof loadedItems === 'object' && loadedItems.cancelled)) {
         return undefined;
     }
 
-    if (Array.isArray(loadedItems) && loadedItems.length > 0 && typeof loadedItems[0] !== 'object') {
+    if (!Array.isArray(loadedItems)) {
+        console.warn('svelte-select loadOptions must return an array');
+        dispatch('error', { type: 'loadOptions', details: 'loadOptions must return an array' });
+        return undefined;
+    }
+
+    if (loadedItems.length > 0 && (typeof loadedItems[0] === 'string' || typeof loadedItems[0] === 'number')) {
         loadedItems = convertStringItemsToObjects(loadedItems);
     }
 

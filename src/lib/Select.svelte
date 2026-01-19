@@ -441,7 +441,7 @@
     }
 
     function updateValueDisplay(items) {
-        if (!items || items.length === 0 || items.some((item) => typeof item !== 'object')) return;
+        if (!items || items.length === 0 || items.some((item) => !item || typeof item !== 'object')) return;
         if (!value || (multiple ? value.some((selection) => !selection || !selection[validatedItemId]) : !value[validatedItemId])) return;
 
         if (Array.isArray(value)) {
@@ -845,12 +845,17 @@
 
     // Only run updateValueDisplay when items content actually changes (not just reference)
     // This prevents loops when parent components create new array references on each render
+    // Optimized: Compare length and first/last item IDs instead of full deep comparison
     $effect(() => {
         if (items !== previousItemsRef) {
-            // Use $state.snapshot() to compare plain objects, avoiding proxy identity issues
-            const itemsSnapshot = items ? $state.snapshot(items) : items;
-            const prevSnapshot = previousItemsRef ? $state.snapshot(previousItemsRef) : previousItemsRef;
-            if (!shallowEqual(itemsSnapshot, prevSnapshot)) {
+            const itemsLen = items?.length ?? 0;
+            const prevLen = previousItemsRef?.length ?? 0;
+            const hasChanged = itemsLen !== prevLen ||
+                (itemsLen > 0 && (
+                    items[0]?.[validatedItemId] !== previousItemsRef?.[0]?.[validatedItemId] ||
+                    items[itemsLen - 1]?.[validatedItemId] !== previousItemsRef?.[prevLen - 1]?.[validatedItemId]
+                ));
+            if (hasChanged) {
                 updateValueDisplay(items);
             }
             previousItemsRef = items;
@@ -940,9 +945,13 @@
         }
     });
 
-    // Consolidated: hoverItemIndex effects
+    // Reset hoverItemIndex when filterText changes
     $effect(() => {
-        if (filterText || (listOpen && multiple)) hoverItemIndex = 0;
+        if (filterText) hoverItemIndex = 0;
+    });
+
+    // Dispatch hover event when hoverItemIndex changes
+    $effect(() => {
         dispatchHover(hoverItemIndex);
     });
 
@@ -956,7 +965,6 @@
         clearTimeout(timeout);
         clearTimeout(isScrollingTimer);
         clearTimeout(itemSelectedTimer);
-        list?.remove();
     });
 </script>
 
@@ -984,7 +992,7 @@
             onscroll={handleListScroll}
             onpointerup={(e) => { e.preventDefault(); e.stopPropagation(); }}
             onmousedown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            role="none">
+            role="listbox">
             {#if listPrependSnippet}{@render listPrependSnippet()}{/if}
             {#if listSnippet}
                 {@render listSnippet({ filteredItems })}
@@ -997,7 +1005,8 @@
                         onkeydown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                         class="list-item"
                         tabindex="-1"
-                        role="none">
+                        role="option"
+                        aria-selected={isItemActive(item, value, validatedItemId)}>
                         <div
                             use:scrollAction={{ scroll: isItemActive(item, value, validatedItemId) || scrollToHoverItem === itemIndex, isListRendered }}
                             class="item"
