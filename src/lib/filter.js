@@ -49,10 +49,11 @@ export default function filter({
 
     let filterResults = items.filter((item) => {
         let matchesFilter = itemFilter(item[label], filterText, item);
-        if (matchesFilter && multiple && value?.length) {
-            matchesFilter = !value.some((x) => {
-                return filterSelectedItems ? x[itemId] === item[itemId] : false;
-            });
+
+        // In multi-select mode, optionally exclude already-selected items
+        if (matchesFilter && multiple && value?.length && filterSelectedItems) {
+            const isAlreadySelected = value.some((selected) => selected[itemId] === item[itemId]);
+            matchesFilter = !isAlreadySelected;
         }
 
         return matchesFilter;

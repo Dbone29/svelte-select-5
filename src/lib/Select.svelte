@@ -177,7 +177,7 @@
     let list = $state(null);
     let isScrolling = $state(false);
     let prefloat = $state(true);
-    let _inputAttributes = $state({});
+    let computedInputAttributes = $state({});
     let previousJustValue = $state(undefined);
     let pendingJustValue = $state(undefined);
     let previousItemsRef = $state(undefined);
@@ -211,14 +211,14 @@
     });
 
     // Floating UI config - using closure for listOffset to capture current value
-    let _floatingConfig = {
+    let internalFloatingConfig = {
         strategy: 'absolute',
         placement: 'bottom-start',
         middleware: [offset(() => listOffset), flip(), shift()],
         autoUpdate: false,
     };
 
-    const [floatingRef, floatingContent, floatingUpdate] = createFloatingActions(_floatingConfig);
+    const [floatingRef, floatingContent, floatingUpdate] = createFloatingActions(internalFloatingConfig);
 
     // Exported functions
     export function getFilteredItems() {
@@ -250,7 +250,7 @@
     }
 
     function assignInputAttributes() {
-        _inputAttributes = Object.assign(
+        computedInputAttributes = Object.assign(
             {
                 autocapitalize: 'none',
                 autocomplete: 'off',
@@ -264,11 +264,11 @@
         );
 
         if (id) {
-            _inputAttributes['id'] = id;
+            computedInputAttributes['id'] = id;
         }
 
         if (!searchable) {
-            _inputAttributes['readonly'] = true;
+            computedInputAttributes['readonly'] = true;
         }
     }
 
@@ -337,20 +337,20 @@
         if (isMultiple && value && !Array.isArray(value)) {
             value = [value];
         } else if (!isMultiple && value) {
-            value = null;
+            value = undefined;
         }
     }
 
     function setValueIndexAsHoverIndex() {
-        const valueIndex = filteredItems.findIndex((i) => {
-            return i[validatedItemId] === value[validatedItemId];
+        const valueIndex = filteredItems.findIndex((item) => {
+            return item[validatedItemId] === value[validatedItemId];
         });
 
         checkHoverSelectable(valueIndex, true);
     }
 
-    function dispatchHover(i) {
-        onhoverItem?.(i);
+    function dispatchHover(itemIndex) {
+        onhoverItem?.(itemIndex);
     }
 
     function checkHoverSelectable(startingIndex = 0, ignoreGroup) {
@@ -405,7 +405,7 @@
     }
 
     function computeJustValue() {
-        if (!value) return multiple ? null : undefined;
+        if (!value) return multiple ? [] : undefined;
         if (multiple) {
             return value.map((item) => item?.[validatedItemId]).filter(id => id !== undefined);
         }
@@ -473,8 +473,8 @@
         }
     }
 
-    async function handleMultiItemClear(i) {
-        const itemToRemove = value[i];
+    async function handleMultiItemClear(itemIndex) {
+        const itemToRemove = value[itemIndex];
 
         if (value.length === 1) {
             value = undefined;
@@ -607,7 +607,12 @@
             const item = Object.assign({}, selection);
 
             if (item.groupHeader && !item.selectable) return;
-            value = multiple ? (value ? value.concat([item]) : [item]) : (value = item);
+
+            if (multiple) {
+                value = value ? [...value, item] : [item];
+            } else {
+                value = item;
+            }
 
             itemSelectedTimer = setTimeout(() => {
                 if (closeListOnChange) closeList();
@@ -639,10 +644,10 @@
 
     function handleAriaContent() {
         if (!filteredItems || filteredItems.length === 0) return '';
-        let _item = filteredItems[hoverItemIndex];
-        if (listOpen && _item) {
+        let hoveredItem = filteredItems[hoverItemIndex];
+        if (listOpen && hoveredItem) {
             let count = filteredItems ? filteredItems.length : 0;
-            return ariaListOpen(_item[validatedLabel], count);
+            return ariaListOpen(hoveredItem[validatedLabel], count);
         } else {
             return ariaFocused();
         }
@@ -666,17 +671,17 @@
         itemSelected(item);
     }
 
-    function handleHover(i) {
+    function handleHover(itemIndex) {
         if (isScrolling) return;
-        hoverItemIndex = i;
+        hoverItemIndex = itemIndex;
     }
 
     function handleItemClick(args) {
-        const { item, i } = args;
+        const { item, itemIndex } = args;
         if (item?.selectable === false) return;
         if (value && !multiple && value[validatedItemId] === item[validatedItemId]) return closeList();
         if (isItemSelectable(item)) {
-            hoverItemIndex = i;
+            hoverItemIndex = itemIndex;
             handleSelect(item);
         }
     }
@@ -725,7 +730,9 @@
     }
 
     function isItemSelectable(item) {
-        return (item.groupHeader && item.selectable) || item.selectable || !item.hasOwnProperty('selectable');
+        if (!item) return false;
+        if (item.groupHeader) return item.selectable === true;
+        return !Object.hasOwn(item, 'selectable') || item.selectable === true;
     }
 
     function scrollAction(node) {
@@ -903,7 +910,7 @@
     });
 
     $effect(() => {
-        if (container && floatingConfig) floatingUpdate(Object.assign(_floatingConfig, floatingConfig));
+        if (container && floatingConfig) floatingUpdate(Object.assign(internalFloatingConfig, floatingConfig));
     });
 
     // Consolidated: List open effects
@@ -964,26 +971,26 @@
             {#if listSnippet}
                 {@render listSnippet({ filteredItems })}
             {:else if filteredItems.length > 0}
-                {#each filteredItems as item, i}
+                {#each filteredItems as item, itemIndex}
                     <div
-                        onmouseover={() => handleHover(i)}
-                        onfocus={() => handleHover(i)}
-                        onclick={(e) => { e.stopPropagation(); handleItemClick({ item, i }); }}
+                        onmouseover={() => handleHover(itemIndex)}
+                        onfocus={() => handleHover(itemIndex)}
+                        onclick={(e) => { e.stopPropagation(); handleItemClick({ item, itemIndex }); }}
                         onkeydown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                         class="list-item"
                         tabindex="-1"
                         role="none">
                         <div
-                            use:scrollAction={{ scroll: isItemActive(item, value, validatedItemId) || scrollToHoverItem === i, isListRendered }}
+                            use:scrollAction={{ scroll: isItemActive(item, value, validatedItemId) || scrollToHoverItem === itemIndex, isListRendered }}
                             class="item"
                             class:list-group-title={item.groupHeader}
                             class:active={isItemActive(item, value, validatedItemId)}
-                            class:first={i === 0}
-                            class:hover={hoverItemIndex === i}
+                            class:first={itemIndex === 0}
+                            class:hover={hoverItemIndex === itemIndex}
                             class:group-item={item.groupItem}
                             class:not-selectable={item?.selectable === false}>
                             {#if itemSnippet}
-                                {@render itemSnippet({ item, index: i })}
+                                {@render itemSnippet({ item, index: itemIndex })}
                             {:else}
                                 {item?.[validatedLabel]}
                             {/if}
@@ -1019,17 +1026,17 @@
     <div class="value-container">
         {#if hasValue}
             {#if multiple}
-                {#each value as item, i}
+                {#each value as item, itemIndex}
                     <div
                         class="multi-item"
-                        class:active={activeFocusedIndex === i}
+                        class:active={activeFocusedIndex === itemIndex}
                         class:disabled
-                        onclick={(e) => { e.preventDefault(); if (multiFullItemClearable) handleMultiItemClear(i); }}
+                        onclick={(e) => { e.preventDefault(); if (multiFullItemClearable) handleMultiItemClear(itemIndex); }}
                         onkeydown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                         role="none">
                         <span class="multi-item-text">
                             {#if selectionSnippet}
-                                {@render selectionSnippet({ selection: item, index: i })}
+                                {@render selectionSnippet({ selection: item, index: itemIndex })}
                             {:else}
                                 {item[validatedLabel]}
                             {/if}
@@ -1038,7 +1045,7 @@
                         {#if !disabled && !multiFullItemClearable && ClearIcon}
                             <div
                                 class="multi-item-clear"
-                                onpointerup={(e) => { e.preventDefault(); e.stopPropagation(); handleMultiItemClear(i); }}>
+                                onpointerup={(e) => { e.preventDefault(); e.stopPropagation(); handleMultiItemClear(itemIndex); }}>
                                 {#if multiClearIconSnippet}
                                     {@render multiClearIconSnippet()}
                                 {:else}
@@ -1064,7 +1071,7 @@
             onblur={handleBlur}
             onfocus={handleFocus}
             readonly={!searchable}
-            {..._inputAttributes}
+            {...computedInputAttributes}
             bind:this={input}
             bind:value={filterText}
             placeholder={placeholderText}
