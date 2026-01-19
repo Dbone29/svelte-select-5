@@ -68,41 +68,92 @@ List position and floating is powered by `floating-ui`, see their [package-entry
 | clearFilterTextOnBlur  | `boolean` | `true`          | If `false`, `filterText` value is preserved on:blur            |
 
 
-## Named slots
+## Snippets (Svelte 5)
+
+Svelte 5 uses snippets instead of slots. Note: snippet names use camelCase (Svelte 5 requirement).
 
 ```svelte
 <Select>
-  <div slot="prepend" />
-  <div slot="selection" let:selection let:index /> <!-- index only available when multiple -->
-  <div slot="clear-icon" />  
-  <div slot="multi-clear-icon" />  
-  <div slot="loading-icon" />  
-  <div slot="chevron-icon" /> 
-  <div slot="list-prepend" />  
-  <div slot="list" let:filteredItems />  
-  <div slot="list-append" />  
-  <div slot="item" let:item let:index />  
-  <div slot="input-hidden" let:value />
-  <div slot="required" let:value />
-  <!-- Remember you can also use `svelte:fragment` to avoid a container DOM element. -->
-  <svelte:fragment slot="empty" />  
+  {#snippet prepend()}
+    <div>Prepend content</div>
+  {/snippet}
+
+  {#snippet selection({ selection, index })}
+    <!-- index only available when multiple -->
+    <div>{selection.label}</div>
+  {/snippet}
+
+  {#snippet clearIcon()}
+    <span>×</span>
+  {/snippet}
+
+  {#snippet multiClearIcon()}
+    <span>×</span>
+  {/snippet}
+
+  {#snippet loadingIcon()}
+    <span>Loading...</span>
+  {/snippet}
+
+  {#snippet chevronIcon({ listOpen })}
+    <span>{listOpen ? '▲' : '▼'}</span>
+  {/snippet}
+
+  {#snippet listPrepend()}
+    <div>List header</div>
+  {/snippet}
+
+  {#snippet list({ filteredItems })}
+    <!-- Custom list rendering -->
+  {/snippet}
+
+  {#snippet listAppend()}
+    <div>List footer</div>
+  {/snippet}
+
+  {#snippet item({ item, index })}
+    <div>{item.label}</div>
+  {/snippet}
+
+  {#snippet inputHidden({ value })}
+    <input type="hidden" value={JSON.stringify(value)} />
+  {/snippet}
+
+  {#snippet requiredSlot({ value })}
+    <!-- Custom required indicator -->
+  {/snippet}
+
+  {#snippet empty()}
+    <div>No results found</div>
+  {/snippet}
 </Select>
 ```
 
 
-## Events
+## Event Callbacks (Svelte 5)
 
-| Event Name | Callback          | Description                                                                |
-| ---------- | ----------------- | -------------------------------------------------------------------------- |
-| change     | { detail }        | fires when the user selects an option                                      |
-| input      | { detail }        | fires when the value has been changed                                      |
-| focus      | { detail }        | fires when select > input on:focus                                         |
-| blur       | { detail }        | fires when select > input on:blur                                          |
-| clear      | { detail }        | fires when clear is invoked or item is removed (by user) from multi select |
-| loaded     | { options }       | fires when `loadOptions` resolves                                          |
-| error      | { type, details } | fires when error is caught                                                 |
-| filter     | { detail }        | fires when `listOpen: true` and items are filtered                         |
-| hoverItem  | { detail }        | fires when hoverItemIndex changes                                          |
+Svelte 5 uses callback props instead of `on:event` syntax.
+
+| Callback     | Argument            | Description                                                                |
+| ------------ | ------------------- | -------------------------------------------------------------------------- |
+| `onchange`   | `value`             | fires when the user selects an option                                      |
+| `oninput`    | `value`             | fires when the value has been changed                                      |
+| `onselect`   | `selection`         | fires when an item is selected                                             |
+| `onfocus`    | `event`             | fires when select input gains focus                                        |
+| `onblur`     | `event`             | fires when select input loses focus                                        |
+| `onclear`    | `value`             | fires when clear is invoked or item is removed (by user) from multi select |
+| `onloaded`   | `{ items }`         | fires when `loadOptions` resolves                                          |
+| `onerror`    | `{ type, details }` | fires when error is caught                                                 |
+| `onfilter`   | `filteredItems`     | fires when `listOpen: true` and items are filtered                         |
+| `onhoverItem`| `hoverItemIndex`    | fires when hoverItemIndex changes                                          |
+
+```svelte
+<Select
+  onchange={(value) => console.log('Changed:', value)}
+  onselect={(selection) => console.log('Selected:', selection)}
+  onclear={(clearedValue) => console.log('Cleared:', clearedValue)}
+/>
+```
 
 
 ### Items

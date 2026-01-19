@@ -17,6 +17,7 @@
         color: var(--spinner-color, var(--icons-color));
         animation: rotate 0.75s linear infinite;
         transform-origin: center center;
+        will-change: transform;
     }
 
     .circle_path {
@@ -30,6 +31,12 @@
         }
         100% {
             transform: rotate(360deg);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .loading {
+            animation: none;
         }
     }
 </style>

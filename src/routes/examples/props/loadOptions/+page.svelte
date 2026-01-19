@@ -13,4 +13,4 @@
     }
 </script>
 
-<Select loadOptions={handleOptions} debounceWait="0" />
+<Select loadOptions={handleOptions} debounceWait={0} />

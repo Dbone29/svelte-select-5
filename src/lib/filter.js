@@ -49,7 +49,7 @@ export default function filter({
     }
 
     let filterResults = items.filter((item) => {
-        let matchesFilter = itemFilter(item[label], filterText, item);
+        let matchesFilter = itemFilter(item[label] ?? '', filterText, item);
 
         // In multi-select mode, optionally exclude already-selected items
         if (matchesFilter && multiple && value?.length && filterSelectedItems) {

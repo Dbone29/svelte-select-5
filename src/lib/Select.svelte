@@ -328,7 +328,7 @@
             return;
         }
 
-        if (!previousValue || value[validatedItemId] !== previousValue[validatedItemId]) {
+        if (!previousValue || !value || value[validatedItemId] !== previousValue[validatedItemId]) {
             oninput?.(value);
         }
     }
@@ -379,9 +379,8 @@
                     filterText,
                 });
 
-                // Ignore stale responses from earlier requests
+                // Ignore stale responses from earlier requests - don't modify any state
                 if (currentVersion !== loadRequestVersion) {
-                    loading = false;
                     return;
                 }
 
@@ -410,8 +409,7 @@
         if (multiple) {
             return value.map((item) => item?.[validatedItemId]).filter(id => id !== undefined);
         }
-        const id = value[validatedItemId];
-        return id !== undefined ? id : undefined;
+        return value[validatedItemId];
     }
 
     function checkValueForDuplicates() {
@@ -476,7 +474,10 @@
         }
     }
 
-    async function handleMultiItemClear(itemIndex) {
+    function handleMultiItemClear(itemIndex) {
+        if (!value || !Array.isArray(value) || itemIndex < 0 || itemIndex >= value.length) {
+            return;
+        }
         const itemToRemove = value[itemIndex];
 
         if (value.length === 1) {
@@ -539,14 +540,16 @@
                 break;
             case 'Tab':
                 if (listOpen && focused) {
+                    const hoverItem = filteredItems[hoverItemIndex];
                     if (
                         filteredItems.length === 0 ||
-                        (value && value[validatedItemId] === filteredItems[hoverItemIndex][validatedItemId])
+                        !hoverItem ||
+                        (value && value[validatedItemId] === hoverItem[validatedItemId])
                     )
                         return closeList();
 
                     e.preventDefault();
-                    handleSelect(filteredItems[hoverItemIndex]);
+                    handleSelect(hoverItem);
                     closeList();
                 }
 
@@ -587,7 +590,7 @@
         focused = true;
     }
 
-    async function handleBlur(e) {
+    function handleBlur(e) {
         if (isScrolling) return;
         if (listOpen || focused) {
             onblur?.(e);
@@ -635,15 +638,12 @@
     }
 
     function handleAriaSelection(_multiple) {
-        let selected = undefined;
-
-        if (_multiple && value.length > 0) {
-            selected = value.map((v) => v[validatedLabel]).join(', ');
-        } else {
-            selected = value[validatedLabel];
+        if (_multiple && value && Array.isArray(value) && value.length > 0) {
+            return ariaValues(value.map((v) => v[validatedLabel]).join(', '));
+        } else if (!_multiple && value) {
+            return ariaValues(value[validatedLabel]);
         }
-
-        return ariaValues(selected);
+        return '';
     }
 
     function handleAriaContent() {
@@ -863,10 +863,15 @@
 
     // Helper function to resolve justValue to value
     function resolveJustValue(jv) {
+        if (!items) return; // Wait for items to load
         if (multiple) {
-            value = jv ? items.filter(item => jv.includes(item[validatedItemId])) : null;
+            value = jv && Array.isArray(jv)
+                ? items.filter(item => jv.includes(item[validatedItemId]))
+                : undefined;
         } else {
-            value = jv != null ? items.find(item => item[validatedItemId] === jv) ?? null : null;
+            value = jv != null
+                ? items.find(item => item[validatedItemId] === jv) ?? undefined
+                : undefined;
         }
     }
 
@@ -916,7 +921,14 @@
     });
 
     $effect(() => {
-        if (container && floatingConfig) floatingUpdate(Object.assign(internalFloatingConfig, floatingConfig));
+        if (container && floatingConfig) {
+            const mergedConfig = {
+                ...internalFloatingConfig,
+                ...floatingConfig,
+                middleware: floatingConfig.middleware || internalFloatingConfig.middleware
+            };
+            floatingUpdate(mergedConfig);
+        }
     });
 
     // Consolidated: List open effects
@@ -1077,6 +1089,8 @@
             onblur={handleBlur}
             onfocus={handleFocus}
             readonly={!searchable}
+            aria-label={id ? undefined : 'Select input'}
+            aria-expanded={listOpen}
             {...computedInputAttributes}
             bind:this={input}
             bind:value={filterText}

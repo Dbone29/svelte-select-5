@@ -41,7 +41,7 @@ export default async function getItems({ dispatch, loadOptions, convertStringIte
         return undefined;
     }
 
-    if (loadedItems.length > 0 && typeof loadedItems[0] !== 'object') {
+    if (Array.isArray(loadedItems) && loadedItems.length > 0 && typeof loadedItems[0] !== 'object') {
         loadedItems = convertStringItemsToObjects(loadedItems);
     }
 
