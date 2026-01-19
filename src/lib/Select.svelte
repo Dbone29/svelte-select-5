@@ -67,11 +67,12 @@
         // Bindable props (two-way binding)
         // Note: Props that can be undefined don't have fallback values
         // to allow bind:prop={undefined} (Svelte 5 requirement)
-        justValue = $bindable(),
+        selectedId = $bindable(),
+        startId = undefined,  // One-time initialization of selectedId
         container = $bindable(),
         input = $bindable(),
         focused = $bindable(false),
-        value = $bindable(),
+        selectedValue = $bindable(),
         filterText = $bindable(''),
         items = $bindable(),
         loading = $bindable(false),
@@ -79,8 +80,8 @@
         hoverItemIndex = $bindable(0),
 
         // Read-only bindable props (output only - external changes are ignored)
-        readonlyValue = $bindable(),
-        readonlyId = $bindable(),
+        readOnlySelectedValue = $bindable(),
+        readOnlySelectedId = $bindable(),
 
         // Function props
         filter = _filter,
@@ -130,8 +131,8 @@
         class: containerClasses = '',
 
         // Aria props
-        ariaValues = (values) => {
-            return `Option ${values}, selected.`;
+        ariaValues = (selectedValues) => {
+            return `Option ${selectedValues}, selected.`;
         },
         ariaListOpen = (labelValue, count) => {
             return `You are currently focused on option ${labelValue}. There are ${count} results available.`;
@@ -171,19 +172,20 @@
     // Internal state
     let timeout;
     let activeFocusedIndex = $state(undefined);
-    let previousValue = $state(undefined);
+    let previousSelectedValue = $state(undefined);
     let previousFilterText = $state(undefined);
     let previousMultiple = $state(undefined);
     let list = $state(null);
     let isScrolling = $state(false);
     let prefloat = $state(true);
     let computedInputAttributes = $state({});
-    let previousJustValue = $state(undefined);
-    let pendingJustValue = $state(undefined);
+    let previousSelectedId = $state(undefined);
+    let pendingSelectedId = $state(undefined);
     let previousItemsRef = $state(undefined);
     let loadRequestVersion = 0;
     let isScrollingTimer;
     let itemSelectedTimer;
+    let startIdApplied = $state(false);
 
     // Validated props using $derived to avoid state_referenced_locally warning
     const validatedItemId = $derived.by(() => {
@@ -226,25 +228,25 @@
     }
 
     export function handleClear() {
-        onclear?.(value);
-        value = undefined;
+        onclear?.(selectedValue);
+        selectedValue = undefined;
         closeList();
         handleFocus();
     }
 
     // Helper functions
     function setValue() {
-        if (typeof value === 'string') {
-            let item = (items || []).find((item) => item[validatedItemId] === value);
-            value = item || {
-                [validatedItemId]: value,
-                label: value,
+        if (typeof selectedValue === 'string') {
+            let item = (items || []).find((item) => item[validatedItemId] === selectedValue);
+            selectedValue = item || {
+                [validatedItemId]: selectedValue,
+                label: selectedValue,
             };
-        } else if (multiple && Array.isArray(value) && value.length > 0) {
+        } else if (multiple && Array.isArray(selectedValue) && selectedValue.length > 0) {
             // Only transform if there are string items that need conversion
-            const hasStringItems = value.some(item => typeof item === 'string');
+            const hasStringItems = selectedValue.some(item => typeof item === 'string');
             if (hasStringItems) {
-                value = value.map((item) => (typeof item === 'string' ? { value: item, label: item } : item));
+                selectedValue = selectedValue.map((item) => (typeof item === 'string' ? { value: item, label: item } : item));
             }
         }
     }
@@ -320,34 +322,34 @@
 
     function dispatchSelectedItem() {
         if (multiple) {
-            if (!shallowEqual(value, previousValue)) {
+            if (!shallowEqual(selectedValue, previousSelectedValue)) {
                 if (checkValueForDuplicates()) {
-                    oninput?.(value);
+                    oninput?.(selectedValue);
                 }
             }
             return;
         }
 
-        if (!previousValue || !value || value[validatedItemId] !== previousValue[validatedItemId]) {
-            oninput?.(value);
+        if (!previousSelectedValue || !selectedValue || selectedValue[validatedItemId] !== previousSelectedValue[validatedItemId]) {
+            oninput?.(selectedValue);
         }
     }
 
     function syncValueToMode(isMultiple) {
-        if (isMultiple && value && !Array.isArray(value)) {
-            value = [value];
-        } else if (!isMultiple && Array.isArray(value)) {
-            value = value.length > 0 ? value[0] : undefined;
+        if (isMultiple && selectedValue && !Array.isArray(selectedValue)) {
+            selectedValue = [selectedValue];
+        } else if (!isMultiple && Array.isArray(selectedValue)) {
+            selectedValue = selectedValue.length > 0 ? selectedValue[0] : undefined;
         }
     }
 
     function setValueIndexAsHoverIndex() {
-        if (!value) return;
+        if (!selectedValue) return;
         const valueIndex = filteredItems.findIndex((item) => {
-            return item[validatedItemId] === value[validatedItemId];
+            return item[validatedItemId] === selectedValue[validatedItemId];
         });
 
-        checkHoverSelectable(valueIndex, true);
+        checkHoverSelectable(selectedValueIndex, true);
     }
 
     function dispatchHover(itemIndex) {
@@ -404,22 +406,22 @@
         }
     }
 
-    function computeJustValue() {
-        if (!value) return multiple ? [] : undefined;
+    function computeSelectedId() {
+        if (!selectedValue) return multiple ? [] : undefined;
         if (multiple) {
-            return value.map((item) => item?.[validatedItemId]).filter(id => id !== undefined);
+            return selectedValue.map((item) => item?.[validatedItemId]).filter(id => id !== undefined);
         }
-        return value[validatedItemId];
+        return selectedValue[validatedItemId];
     }
 
     function checkValueForDuplicates() {
-        if (!value?.length) return true;
+        if (!selectedValue?.length) return true;
 
         const seen = new Set();
         const uniqueValues = [];
         let noDuplicates = true;
 
-        for (const val of value) {
+        for (const val of selectedValue) {
             const id = val[validatedItemId];
             if (seen.has(id)) {
                 noDuplicates = false;
@@ -429,26 +431,26 @@
             }
         }
 
-        if (!noDuplicates) value = uniqueValues;
+        if (!noDuplicates) selectedValue = uniqueValues;
         return noDuplicates;
     }
 
     function findItem(selection) {
         if (!items) return undefined;
-        const matchTo = selection?.[validatedItemId] ?? value?.[validatedItemId];
+        const matchTo = selection?.[validatedItemId] ?? selectedValue?.[validatedItemId];
         if (matchTo === undefined) return undefined;
         return items.find((item) => item[validatedItemId] === matchTo);
     }
 
     function updateValueDisplay(items) {
         if (!items || items.length === 0 || items.some((item) => !item || typeof item !== 'object')) return;
-        if (!value || (multiple ? value.some((selection) => !selection || !selection[validatedItemId]) : !value[validatedItemId])) return;
+        if (!selectedValue || (multiple ? selectedValue.some((selection) => !selection || !selection[validatedItemId]) : !selectedValue[validatedItemId])) return;
 
-        if (Array.isArray(value)) {
+        if (Array.isArray(selectedValue)) {
             // Check if any value needs updating - compare properties, not references
             // (Svelte 5 proxies have different identities than their targets)
             let needsUpdate = false;
-            const newValue = value.map((selection) => {
+            const newValue = selectedValue.map((selection) => {
                 const found = findItem(selection);
                 // Only update if found item has different properties (not just different reference)
                 if (found && found[validatedItemId] === selection[validatedItemId]) {
@@ -461,29 +463,29 @@
                 return selection;
             });
             if (needsUpdate) {
-                value = newValue;
+                selectedValue = newValue;
             }
         } else {
             const found = findItem();
             // Only update if found item has different properties
-            if (found && found[validatedItemId] === value[validatedItemId]) {
-                if (!shallowEqual(found, value)) {
-                    value = found;
+            if (found && found[validatedItemId] === selectedValue[validatedItemId]) {
+                if (!shallowEqual(found, selectedValue)) {
+                    selectedValue = found;
                 }
             }
         }
     }
 
     function handleMultiItemClear(itemIndex) {
-        if (!value || !Array.isArray(value) || itemIndex < 0 || itemIndex >= value.length) {
+        if (!selectedValue || !Array.isArray(selectedValue) || itemIndex < 0 || itemIndex >= selectedValue.length) {
             return;
         }
-        const itemToRemove = value[itemIndex];
+        const itemToRemove = selectedValue[itemIndex];
 
-        if (value.length === 1) {
-            value = undefined;
+        if (selectedValue.length === 1) {
+            selectedValue = undefined;
         } else {
-            value = value.filter((item) => {
+            selectedValue = selectedValue.filter((item) => {
                 return item !== itemToRemove;
             });
         }
@@ -507,7 +509,7 @@
                     const hoverItem = filteredItems[hoverItemIndex];
                     if (!hoverItem) break;
 
-                    if (value && !multiple && value[validatedItemId] === hoverItem[validatedItemId]) {
+                    if (selectedValue && !multiple && selectedValue[validatedItemId] === hoverItem[validatedItemId]) {
                         closeList();
                         break;
                     } else {
@@ -544,7 +546,7 @@
                     if (
                         filteredItems.length === 0 ||
                         !hoverItem ||
-                        (value && value[validatedItemId] === hoverItem[validatedItemId])
+                        (selectedValue && selectedValue[validatedItemId] === hoverItem[validatedItemId])
                     )
                         return closeList();
 
@@ -557,26 +559,26 @@
             case 'Backspace':
                 if (!multiple || filterText.length > 0) return;
 
-                if (multiple && value && value.length > 0) {
-                    handleMultiItemClear(activeFocusedIndex !== undefined ? activeFocusedIndex : value.length - 1);
+                if (multiple && selectedValue && selectedValue.length > 0) {
+                    handleMultiItemClear(activeFocusedIndex !== undefined ? activeFocusedIndex : selectedValue.length - 1);
                     if (activeFocusedIndex === 0 || activeFocusedIndex === undefined) break;
-                    activeFocusedIndex = value.length > activeFocusedIndex ? activeFocusedIndex - 1 : undefined;
+                    activeFocusedIndex = selectedValue.length > activeFocusedIndex ? activeFocusedIndex - 1 : undefined;
                 }
 
                 break;
             case 'ArrowLeft':
-                if (!value || !multiple || filterText.length > 0) return;
+                if (!selectedValue || !multiple || filterText.length > 0) return;
                 if (activeFocusedIndex === undefined) {
-                    activeFocusedIndex = value.length - 1;
-                } else if (value.length > activeFocusedIndex && activeFocusedIndex !== 0) {
+                    activeFocusedIndex = selectedValue.length - 1;
+                } else if (selectedValue.length > activeFocusedIndex && activeFocusedIndex !== 0) {
                     activeFocusedIndex -= 1;
                 }
                 break;
             case 'ArrowRight':
-                if (!value || !multiple || filterText.length > 0 || activeFocusedIndex === undefined) return;
-                if (activeFocusedIndex === value.length - 1) {
+                if (!selectedValue || !multiple || filterText.length > 0 || activeFocusedIndex === undefined) return;
+                if (activeFocusedIndex === selectedValue.length - 1) {
                     activeFocusedIndex = undefined;
-                } else if (activeFocusedIndex < value.length - 1) {
+                } else if (activeFocusedIndex < selectedValue.length - 1) {
                     activeFocusedIndex += 1;
                 }
                 break;
@@ -615,16 +617,16 @@
             if (item.groupHeader && !item.selectable) return;
 
             if (multiple) {
-                value = value ? [...value, item] : [item];
+                selectedValue = selectedValue ? [...selectedValue, item] : [item];
             } else {
-                value = item;
+                selectedValue = item;
             }
 
             clearTimeout(itemSelectedTimer);
             itemSelectedTimer = setTimeout(() => {
                 if (closeListOnChange) closeList();
                 activeFocusedIndex = undefined;
-                onchange?.(value);
+                onchange?.(selectedValue);
                 onselect?.(selection);
             });
         }
@@ -638,10 +640,10 @@
     }
 
     function handleAriaSelection(_multiple) {
-        if (_multiple && value && Array.isArray(value) && value.length > 0) {
-            return ariaValues(value.map((v) => v[validatedLabel]).join(', '));
-        } else if (!_multiple && value) {
-            return ariaValues(value[validatedLabel]);
+        if (_multiple && selectedValue && Array.isArray(selectedValue) && selectedValue.length > 0) {
+            return ariaValues(selectedValue.map((v) => v[validatedLabel]).join(', '));
+        } else if (!_multiple && selectedValue) {
+            return ariaValues(selectedValue[validatedLabel]);
         }
         return '';
     }
@@ -683,7 +685,7 @@
     function handleItemClick(args) {
         const { item, itemIndex } = args;
         if (item?.selectable === false) return;
-        if (value && !multiple && value[validatedItemId] === item[validatedItemId]) return closeList();
+        if (selectedValue && !multiple && selectedValue[validatedItemId] === item[validatedItemId]) return closeList();
         if (isItemSelectable(item)) {
             hoverItemIndex = itemIndex;
             handleSelect(item);
@@ -728,9 +730,9 @@
         }
     }
 
-    function isItemActive(item, value, itemId) {
+    function isItemActive(item, selectedValue, itemId) {
         if (multiple) return;
-        return value && value[itemId] === item[itemId];
+        return selectedValue && selectedValue[itemId] === item[itemId];
     }
 
     function isItemSelectable(item) {
@@ -773,7 +775,7 @@
         filterText,
         items,
         multiple,
-        value,
+        selectedValue,
         itemId: validatedItemId,
         groupBy,
         label: validatedLabel,
@@ -782,29 +784,29 @@
         convertStringItemsToObjects,
         filterGroupedItems,
     }));
-    let hasValue = $derived(multiple ? value && value.length > 0 : value);
+    let hasValue = $derived(multiple ? selectedValue && selectedValue.length > 0 : selectedValue);
     let hideSelectedItem = $derived(hasValue && filterText.length > 0);
     let showClear = $derived(hasValue && clearable && !disabled && !loading);
     function getPlaceholderText() {
         if (placeholderAlwaysShow && multiple) return placeholder;
-        if (multiple && !value?.length) return placeholder;
-        return value ? '' : placeholder;
+        if (multiple && !selectedValue?.length) return placeholder;
+        return selectedValue ? '' : placeholder;
     }
     let placeholderText = $derived(getPlaceholderText());
-    let ariaSelection = $derived(value ? handleAriaSelection(multiple) : '');
+    let ariaSelection = $derived(selectedValue ? handleAriaSelection(multiple) : '');
     let ariaContext = $derived(handleAriaContent());
     let isListRendered = $derived(!!list);
     let scrollToHoverItem = $derived(hoverItemIndex);
 
     // Effects (side effects replacing reactive statements)
     $effect.pre(() => {
-        previousValue = value;
+        previousSelectedValue = selectedValue;
         previousFilterText = filterText;
         previousMultiple = multiple;
     });
 
     $effect(() => {
-        if (items !== undefined || value !== undefined) setValue();
+        if (items !== undefined || selectedValue !== undefined) setValue();
     });
 
     $effect(() => {
@@ -815,7 +817,7 @@
     $effect(() => {
         if (multiple) {
             syncValueToMode(true);
-            if (value && value.length > 1) checkValueForDuplicates();
+            if (selectedValue && selectedValue.length > 1) checkValueForDuplicates();
         } else if (previousMultiple) {
             syncValueToMode(false);
         }
@@ -823,11 +825,11 @@
 
     // Consolidated: Value change effects
     $effect(() => {
-        if (value) {
+        if (selectedValue) {
             dispatchSelectedItem();
-        } else if (previousValue) {
+        } else if (previousSelectedValue) {
             // Intentionally passing undefined to signal value was cleared
-            oninput?.(value);
+            oninput?.(selectedValue);
         }
     });
 
@@ -840,7 +842,7 @@
     });
 
     $effect(() => {
-        if (!multiple && listOpen && value && filteredItems) setValueIndexAsHoverIndex();
+        if (!multiple && listOpen && selectedValue && filteredItems) setValueIndexAsHoverIndex();
     });
 
     // Only run updateValueDisplay when items content actually changes (not just reference)
@@ -863,62 +865,70 @@
     });
 
     $effect(() => {
-        justValue = computeJustValue();
+        selectedId = computeSelectedId();
     });
 
-    // Helper function to resolve justValue to value
-    function resolveJustValue(jv) {
+    // Helper function to resolve selectedId to value
+    function resolveSelectedId(id) {
         if (!items) return; // Wait for items to load
         if (multiple) {
-            value = jv && Array.isArray(jv)
-                ? items.filter(item => jv.includes(item[validatedItemId]))
+            selectedValue = id && Array.isArray(id)
+                ? items.filter(item => id.includes(item[validatedItemId]))
                 : undefined;
         } else {
-            value = jv != null
-                ? items.find(item => item[validatedItemId] === jv) ?? undefined
+            selectedValue = id != null
+                ? items.find(item => item[validatedItemId] === id) ?? undefined
                 : undefined;
         }
     }
 
-    // Handle external changes to justValue (allows setting value via justValue)
-    // Also handles case where justValue is set before items are loaded
+    // Handle external changes to selectedId (allows setting value via selectedId)
+    // Also handles case where selectedId is set before items are loaded
     $effect(() => {
-        const computed = computeJustValue();
-        // Compare justValue with computed - handles arrays (multiple) and primitives (single)
-        const valuesMatch = Array.isArray(justValue) && Array.isArray(computed)
-            ? justValue.length === computed.length && justValue.every((v, i) => v === computed[i])
-            : justValue === computed;
-        const isExternalChange = justValue !== previousJustValue && !valuesMatch;
+        const computed = computeSelectedId();
+        // Compare selectedId with computed - handles arrays (multiple) and primitives (single)
+        const valuesMatch = Array.isArray(selectedId) && Array.isArray(computed)
+            ? selectedId.length === computed.length && selectedId.every((v, i) => v === computed[i])
+            : selectedId === computed;
+        const isExternalChange = selectedId !== previousSelectedId && !valuesMatch;
 
         if (isExternalChange) {
             if (!items) {
                 // Items not loaded yet - save for later
-                pendingJustValue = justValue;
+                pendingSelectedId = selectedId;
             } else {
                 // Items available - resolve immediately
-                resolveJustValue(justValue);
-                pendingJustValue = undefined;
+                resolveSelectedId(selectedId);
+                pendingSelectedId = undefined;
             }
         }
 
-        // When items load and we have a pending justValue, resolve it
-        if (items && pendingJustValue !== undefined && !value) {
-            resolveJustValue(pendingJustValue);
-            pendingJustValue = undefined;
+        // When items load and we have a pending selectedId, resolve it
+        if (items && pendingSelectedId !== undefined && !selectedValue) {
+            resolveSelectedId(pendingSelectedId);
+            pendingSelectedId = undefined;
         }
 
-        previousJustValue = justValue;
+        previousSelectedId = selectedId;
+    });
+
+    // Apply startId only once at initialization
+    $effect(() => {
+        if (startId !== undefined && !startIdApplied) {
+            selectedId = startId;
+            startIdApplied = true;
+        }
     });
 
     // Read-only props - always reflect current state, external changes are ignored
     // Using $effect.pre to update before DOM render for better synchronization
     $effect.pre(() => {
-        readonlyValue = value;
-        readonlyId = computeJustValue();
+        readOnlySelectedValue = selectedValue;
+        readOnlySelectedId = computeSelectedId();
     });
 
     $effect(() => {
-        if (listOpen && filteredItems && !multiple && !value) checkHoverSelectable();
+        if (listOpen && filteredItems && !multiple && !selectedValue) checkHoverSelectable();
     });
 
     $effect(() => {
@@ -1006,12 +1016,12 @@
                         class="list-item"
                         tabindex="-1"
                         role="option"
-                        aria-selected={isItemActive(item, value, validatedItemId)}>
+                        aria-selected={isItemActive(item, selectedValue, validatedItemId)}>
                         <div
-                            use:scrollAction={{ scroll: isItemActive(item, value, validatedItemId) || scrollToHoverItem === itemIndex, isListRendered }}
+                            use:scrollAction={{ scroll: isItemActive(item, selectedValue, validatedItemId) || scrollToHoverItem === itemIndex, isListRendered }}
                             class="item"
                             class:list-group-title={item.groupHeader}
-                            class:active={isItemActive(item, value, validatedItemId)}
+                            class:active={isItemActive(item, selectedValue, validatedItemId)}
                             class:first={itemIndex === 0}
                             class:hover={hoverItemIndex === itemIndex}
                             class:group-item={item.groupItem}
@@ -1053,7 +1063,7 @@
     <div class="value-container">
         {#if hasValue}
             {#if multiple}
-                {#each value as item, itemIndex}
+                {#each selectedValue as item, itemIndex}
                     <div
                         class="multi-item"
                         class:active={activeFocusedIndex === itemIndex}
@@ -1085,9 +1095,9 @@
             {:else}
                 <div class="selected-item" class:hide-selected-item={hideSelectedItem}>
                     {#if selectionSnippet}
-                        {@render selectionSnippet({ selection: value })}
+                        {@render selectionSnippet({ selection: selectedValue })}
                     {:else}
-                        {value[validatedLabel]}
+                        {selectedValue[validatedLabel]}
                     {/if}
                 </div>
             {/if}
@@ -1141,14 +1151,14 @@
     </div>
 
     {#if inputHiddenSnippet}
-        {@render inputHiddenSnippet({ value })}
+        {@render inputHiddenSnippet({ selectedValue })}
     {:else}
-        <input {name} type="hidden" value={value ? JSON.stringify(value) : null} />
+        <input {name} type="hidden" value={selectedValue ? JSON.stringify(selectedValue) : null} />
     {/if}
 
-    {#if required && (!value || value.length === 0)}
+    {#if required && (!selectedValue || selectedValue.length === 0)}
         {#if requiredSlotSnippet}
-            {@render requiredSlotSnippet({ value })}
+            {@render requiredSlotSnippet({ selectedValue })}
         {:else}
             <select class="required" required tabindex="-1" aria-hidden="true"></select>
         {/if}

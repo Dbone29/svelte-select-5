@@ -7,10 +7,10 @@
         { value: 'three', label: 'Three' },
     ];
 
-    let justValue;
+    let selectedId;
 </script>
 
 
-<Select items={collection} bind:justValue />
+<Select items={collection} bind:selectedId />
 
-<p>justValue: {justValue}</p>
+<p>selectedId: {selectedId}</p>

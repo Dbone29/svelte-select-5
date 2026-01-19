@@ -30,10 +30,10 @@ cd package && npm publish   # Publish to npm
 ### Key Props Pattern
 ```svelte
 let {
-    value = $bindable(),      // Selected item(s) - full objects
-    justValue = $bindable(),  // Selected IDs only - can be set to update value
-    items = $bindable(),      // Array of selectable items
-    multiple = false,         // Multi-select mode
+    selectedValue = $bindable(),  // Selected item(s) - full objects
+    selectedId = $bindable(),     // Selected IDs only - can be set to update selectedValue
+    items = $bindable(),          // Array of selectable items
+    multiple = false,             // Multi-select mode
     // ... many more props
 } = $props();
 ```
@@ -85,4 +85,4 @@ Examples are in `src/routes/examples/` - use `npm run dev` to test interactively
 
 - Svelte 5 snippets cannot have hyphenated names (use camelCase)
 - `$bindable()` props without fallback values allow `bind:prop={undefined}`
-- The `justValue` prop can now be set to update `value` automatically
+- The `selectedId` prop can now be set to update `selectedValue` automatically

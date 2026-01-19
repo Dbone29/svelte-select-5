@@ -35,8 +35,11 @@ List position and floating is powered by `floating-ui`, see their [package-entry
 | Prop                   | Type      | Default         | Description                                                    |
 | ---------------------- | --------- | --------------- | -------------------------------------------------------------- |
 | items                  | `any[]`   | `[]`            | Array of items available to display / filter                   |
-| value                  | `any`     | `null`          | Selected value(s)                                              |
-| justValue              | `any`     | `null`          | Selected value(s) IDs only. Can be set to update `value`.      |
+| selectedValue          | `any`     | `null`          | Selected value(s)                                              |
+| selectedId             | `any`     | `null`          | Selected value(s) IDs only. Can be set to update `selectedValue`. |
+| startId                | `any`     | `undefined`     | Initial value for `selectedId`. Applied once on mount, then ignored. |
+| readOnlySelectedValue  | `any`     | `undefined`     | Read-only binding for `selectedValue` (output only)            |
+| readOnlySelectedId     | `any`     | `undefined`     | Read-only binding for `selectedId` (output only)               |
 | itemId                 | `string`  | `value`         | Override default identifier                                    |
 | label                  | `string`  | `label`         | Override default label                                         |
 | id                     | `string`  | `null`          | id attr for input field                                        |

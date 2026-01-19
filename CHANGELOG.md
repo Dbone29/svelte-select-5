@@ -1,5 +1,34 @@
 # svelte-select-5 changelog
 
+## 7.0.0 (2026-01-19)
+
+**BREAKING CHANGES:**
+
+Props renamed for consistency and clarity:
+
+| Old Name | New Name |
+|----------|----------|
+| `value` | `selectedValue` |
+| `justValue` | `selectedId` |
+| `readonlyValue` | `readOnlySelectedValue` |
+| `readonlyId` | `readOnlySelectedId` |
+
+**Migration:**
+
+```svelte
+<!-- Before -->
+<Select bind:value={contact} bind:justValue={contactId} />
+
+<!-- After -->
+<Select bind:selectedValue={contact} bind:selectedId={contactId} />
+```
+
+**New Features:**
+
+* Added `startId` prop for one-time initialization of `selectedId`. Applied once on mount, then ignored.
+
+---
+
 ## 6.2.5
 
 **Bug Fixes:**

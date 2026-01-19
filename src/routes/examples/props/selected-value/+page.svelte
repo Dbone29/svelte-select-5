@@ -9,11 +9,11 @@
         { value: 'three', label: 'Three' },
     ];
 
-    let value;
+    let selectedValue;
 </script>
 
-<Select {items} value="One" />
+<Select {items} selectedValue="One" />
 <br />
-<Select items={collection} bind:value />
+<Select items={collection} bind:selectedValue />
 
-<p>{value?.label || ''}</p>
+<p>{selectedValue?.label || ''}</p>

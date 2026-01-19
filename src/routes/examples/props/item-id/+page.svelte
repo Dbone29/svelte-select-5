@@ -7,9 +7,9 @@
         { foo: '3', label: 'Three' },
     ];
 
-    let justValue;
+    let selectedId;
 </script>
 
-<Select {items} itemId="foo" bind:justValue />
+<Select {items} itemId="foo" bind:selectedId />
 
-<p>{justValue}</p>
+<p>{selectedId}</p>

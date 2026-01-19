@@ -9,15 +9,15 @@
         items.push(i.toString());
     }
 
-    let value = $state(undefined);
+    let selectedValue = $state(undefined);
     let listOpen = $state(false);
     let activeIndex = $state(null);
-    let justValue = $state(undefined);
+    let selectedId = $state(undefined);
     let hoverItemIndex = $state(0);
 
     function handleClick(i) {
         activeIndex = i;
-        value = items[i];
+        selectedValue = items[i];
         listOpen = false;
     }
 
@@ -26,7 +26,7 @@
     }
 
     async function handleListOpen() {
-        if (!value) return;
+        if (!selectedValue) return;
         await tick();
         hoverItemIndex = activeIndex;
     }
@@ -42,8 +42,8 @@
     --list-max-height="300px"
     {items}
     bind:listOpen
-    bind:value
-    bind:justValue
+    bind:selectedValue
+    bind:selectedId
     bind:hoverItemIndex
     onhoverItem={(e) => handleHover(e)}>
     {#snippet list({ filteredItems })}
