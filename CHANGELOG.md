@@ -1,5 +1,13 @@
 # svelte-select-5 changelog
 
+## 6.2.4
+
+**Bug Fix:**
+
+* Fixed Svelte 5 `state_proxy_equality_mismatch` warning
+  - Used `$state.snapshot()` to convert proxies to plain objects before comparison in `arrayShallowEqual()`
+  - Avoids proxy identity issues when comparing reactive state values
+
 ## 6.2.3
 
 **Performance Optimization & Bug Fix:**

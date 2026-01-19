@@ -841,8 +841,10 @@
     // This prevents loops when parent components create new array references on each render
     $effect(() => {
         if (items !== prevItemsRef) {
-            // Only update if content differs, not just reference
-            if (!arrayShallowEqual(items, prevItemsRef)) {
+            // Use $state.snapshot() to compare plain objects, avoiding proxy identity issues
+            const itemsSnapshot = items ? $state.snapshot(items) : items;
+            const prevSnapshot = prevItemsRef ? $state.snapshot(prevItemsRef) : prevItemsRef;
+            if (!arrayShallowEqual(itemsSnapshot, prevSnapshot)) {
                 updateValueDisplay(items);
             }
             prevItemsRef = items;
