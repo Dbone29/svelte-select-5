@@ -166,20 +166,6 @@
         requiredSlot: requiredSlotSnippet = undefined,
     } = $props();
 
-    // Prop validation (runs once on init)
-    if (typeof itemId !== 'string') {
-        console.warn('[svelte-select-5] itemId must be a string, using "value"');
-        itemId = 'value';
-    }
-    if (typeof label !== 'string') {
-        console.warn('[svelte-select-5] label must be a string, using "label"');
-        label = 'label';
-    }
-    if (loadOptions !== undefined && typeof loadOptions !== 'function') {
-        console.warn('[svelte-select-5] loadOptions must be a function');
-        loadOptions = undefined;
-    }
-
     // Internal state
     let timeout;
     let activeValue = $state(undefined);
@@ -195,6 +181,31 @@
     let prevItemsRef = $state(undefined);
     let loadRequestVersion = 0;
     let isScrollingTimer;
+
+    // Validated props using $derived to avoid state_referenced_locally warning
+    const _itemId = $derived.by(() => {
+        if (typeof itemId !== 'string') {
+            console.warn('[svelte-select-5] itemId must be a string, using "value"');
+            return 'value';
+        }
+        return itemId;
+    });
+
+    const _label = $derived.by(() => {
+        if (typeof label !== 'string') {
+            console.warn('[svelte-select-5] label must be a string, using "label"');
+            return 'label';
+        }
+        return label;
+    });
+
+    const _loadOptions = $derived.by(() => {
+        if (loadOptions !== undefined && typeof loadOptions !== 'function') {
+            console.warn('[svelte-select-5] loadOptions must be a function');
+            return undefined;
+        }
+        return loadOptions;
+    });
 
     // Floating UI config - using closure for listOffset to capture current value
     let _floatingConfig = {
@@ -221,9 +232,9 @@
     // Helper functions
     function setValue() {
         if (typeof value === 'string') {
-            let item = (items || []).find((item) => item[itemId] === value);
+            let item = (items || []).find((item) => item[_itemId] === value);
             value = item || {
-                [itemId]: value,
+                [_itemId]: value,
                 label: value,
             };
         } else if (multiple && Array.isArray(value) && value.length > 0) {
@@ -314,7 +325,7 @@
             return;
         }
 
-        if (!prev_value || value[itemId] !== prev_value[itemId]) {
+        if (!prev_value || value[_itemId] !== prev_value[_itemId]) {
             oninput?.(value);
         }
     }
@@ -331,7 +342,7 @@
 
     function setValueIndexAsHoverIndex() {
         const valueIndex = filteredItems.findIndex((i) => {
-            return i[itemId] === value[itemId];
+            return i[_itemId] === value[_itemId];
         });
 
         checkHoverSelectable(valueIndex, true);
@@ -349,9 +360,9 @@
     }
 
     function setupFilterText() {
-        if (!loadOptions && filterText.length === 0) return;
+        if (!_loadOptions && filterText.length === 0) return;
 
-        if (loadOptions) {
+        if (_loadOptions) {
             debounce(async function () {
                 const currentVersion = ++loadRequestVersion;
                 loading = true;
@@ -361,7 +372,7 @@
                         if (event === 'error') onerror?.(data);
                         if (event === 'loaded') onloaded?.(data);
                     },
-                    loadOptions,
+                    loadOptions: _loadOptions,
                     convertStringItemsToObjects,
                     filterText,
                 });
@@ -394,9 +405,9 @@
     function computeJustValue() {
         if (!value) return multiple ? null : undefined;
         if (multiple) {
-            return value.map((item) => item?.[itemId]).filter(id => id !== undefined);
+            return value.map((item) => item?.[_itemId]).filter(id => id !== undefined);
         }
-        const id = value[itemId];
+        const id = value[_itemId];
         return id !== undefined ? id : undefined;
     }
 
@@ -408,7 +419,7 @@
         let noDuplicates = true;
 
         for (const val of value) {
-            const id = val[itemId];
+            const id = val[_itemId];
             if (seen.has(id)) {
                 noDuplicates = false;
             } else {
@@ -422,13 +433,13 @@
     }
 
     function findItem(selection) {
-        let matchTo = selection ? selection[itemId] : value[itemId];
-        return items.find((item) => item[itemId] === matchTo);
+        let matchTo = selection ? selection[_itemId] : value[_itemId];
+        return items.find((item) => item[_itemId] === matchTo);
     }
 
     function updateValueDisplay(items) {
         if (!items || items.length === 0 || items.some((item) => typeof item !== 'object')) return;
-        if (!value || (multiple ? value.some((selection) => !selection || !selection[itemId]) : !value[itemId])) return;
+        if (!value || (multiple ? value.some((selection) => !selection || !selection[_itemId]) : !value[_itemId])) return;
 
         if (Array.isArray(value)) {
             // Check if any value needs updating - compare properties, not references
@@ -437,7 +448,7 @@
             const newValue = value.map((selection) => {
                 const found = findItem(selection);
                 // Only update if found item has different properties (not just different reference)
-                if (found && found[itemId] === selection[itemId]) {
+                if (found && found[_itemId] === selection[_itemId]) {
                     // Same itemId - check if other properties differ using shallow comparison
                     if (!shallowEqual(found, selection)) {
                         needsUpdate = true;
@@ -452,7 +463,7 @@
         } else {
             const found = findItem();
             // Only update if found item has different properties
-            if (found && found[itemId] === value[itemId]) {
+            if (found && found[_itemId] === value[_itemId]) {
                 if (!shallowEqual(found, value)) {
                     value = found;
                 }
@@ -489,7 +500,7 @@
                     if (filteredItems.length === 0) break;
                     const hoverItem = filteredItems[hoverItemIndex];
 
-                    if (value && !multiple && value[itemId] === hoverItem[itemId]) {
+                    if (value && !multiple && value[_itemId] === hoverItem[_itemId]) {
                         closeList();
                         break;
                     } else {
@@ -524,7 +535,7 @@
                 if (listOpen && focused) {
                     if (
                         filteredItems.length === 0 ||
-                        (value && value[itemId] === filteredItems[hoverItemIndex][itemId])
+                        (value && value[_itemId] === filteredItems[hoverItemIndex][_itemId])
                     )
                         return closeList();
 
@@ -615,9 +626,9 @@
         let selected = undefined;
 
         if (_multiple && value.length > 0) {
-            selected = value.map((v) => v[label]).join(', ');
+            selected = value.map((v) => v[_label]).join(', ');
         } else {
-            selected = value[label];
+            selected = value[_label];
         }
 
         return ariaValues(selected);
@@ -628,7 +639,7 @@
         let _item = filteredItems[hoverItemIndex];
         if (listOpen && _item) {
             let count = filteredItems ? filteredItems.length : 0;
-            return ariaListOpen(_item[label], count);
+            return ariaListOpen(_item[_label], count);
         } else {
             return ariaFocused();
         }
@@ -660,7 +671,7 @@
     function handleItemClick(args) {
         const { item, i } = args;
         if (item?.selectable === false) return;
-        if (value && !multiple && value[itemId] === item[itemId]) return closeList();
+        if (value && !multiple && value[_itemId] === item[_itemId]) return closeList();
         if (isItemSelectable(item)) {
             hoverItemIndex = i;
             handleSelect(item);
@@ -750,14 +761,14 @@
 
     // Derived values - order matters! filteredItems must come before ariaContext
     let filteredItems = $derived(filter({
-        loadOptions,
+        loadOptions: _loadOptions,
         filterText,
         items,
         multiple,
         value,
-        itemId,
+        itemId: _itemId,
         groupBy,
-        label,
+        label: _label,
         filterSelectedItems,
         itemFilter,
         convertStringItemsToObjects,
@@ -845,9 +856,9 @@
     // Helper function to resolve justValue to value
     function resolveJustValue(jv) {
         if (multiple) {
-            value = jv ? items.filter(item => jv.includes(item[itemId])) : null;
+            value = jv ? items.filter(item => jv.includes(item[_itemId])) : null;
         } else {
-            value = jv != null ? items.find(item => item[itemId] === jv) ?? null : null;
+            value = jv != null ? items.find(item => item[_itemId] === jv) ?? null : null;
         }
     }
 
@@ -967,11 +978,11 @@
                         tabindex="-1"
                         role="none">
                         <div
-                            use:activeScroll={{ scroll: isItemActive(item, value, itemId), listDom }}
+                            use:activeScroll={{ scroll: isItemActive(item, value, _itemId), listDom }}
                             use:hoverScroll={{ scroll: scrollToHoverItem === i, listDom }}
                             class="item"
                             class:list-group-title={item.groupHeader}
-                            class:active={isItemActive(item, value, itemId)}
+                            class:active={isItemActive(item, value, _itemId)}
                             class:first={isItemFirst(i)}
                             class:hover={hoverItemIndex === i}
                             class:group-item={item.groupItem}
@@ -979,7 +990,7 @@
                             {#if itemSnippet}
                                 {@render itemSnippet({ item, index: i })}
                             {:else}
-                                {item?.[label]}
+                                {item?.[_label]}
                             {/if}
                         </div>
                     </div>
@@ -1025,7 +1036,7 @@
                             {#if selectionSnippet}
                                 {@render selectionSnippet({ selection: item, index: i })}
                             {:else}
-                                {item[label]}
+                                {item[_label]}
                             {/if}
                         </span>
 
@@ -1047,7 +1058,7 @@
                     {#if selectionSnippet}
                         {@render selectionSnippet({ selection: value })}
                     {:else}
-                        {value[label]}
+                        {value[_label]}
                     {/if}
                 </div>
             {/if}
