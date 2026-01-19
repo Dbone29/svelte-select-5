@@ -16,7 +16,7 @@
 <style>
     svg {
         width: var(--clear-icon-width, 20px);
-        height: var(--clear-icon-width, 20px);
+        height: var(--clear-icon-height, 20px);
         color: var(--clear-icon-color, currentColor);
     }
 </style>

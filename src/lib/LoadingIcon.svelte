@@ -17,7 +17,6 @@
         color: var(--spinner-color, var(--icons-color));
         animation: rotate 0.75s linear infinite;
         transform-origin: center center;
-        transform: none;
     }
 
     .circle_path {
@@ -26,6 +25,9 @@
     }
 
     @keyframes rotate {
+        0% {
+            transform: rotate(0deg);
+        }
         100% {
             transform: rotate(360deg);
         }

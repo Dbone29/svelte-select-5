@@ -40,7 +40,8 @@ export default function filter({
     filterGroupedItems,
     label,
 }) {
-    if (items && loadOptions) return items;
+    // When using loadOptions, filtering happens server-side, so return items as-is
+    if (loadOptions && items) return items;
     if (!items) return [];
 
     if (items && items.length > 0 && typeof items[0] !== 'object') {

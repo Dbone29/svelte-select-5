@@ -336,12 +336,13 @@
     function syncValueToMode(isMultiple) {
         if (isMultiple && value && !Array.isArray(value)) {
             value = [value];
-        } else if (!isMultiple && value) {
-            value = undefined;
+        } else if (!isMultiple && Array.isArray(value)) {
+            value = value.length > 0 ? value[0] : undefined;
         }
     }
 
     function setValueIndexAsHoverIndex() {
+        if (!value) return;
         const valueIndex = filteredItems.findIndex((item) => {
             return item[validatedItemId] === value[validatedItemId];
         });
@@ -435,7 +436,9 @@
     }
 
     function findItem(selection) {
-        let matchTo = selection ? selection[validatedItemId] : value[validatedItemId];
+        if (!items) return undefined;
+        const matchTo = selection?.[validatedItemId] ?? value?.[validatedItemId];
+        if (matchTo === undefined) return undefined;
         return items.find((item) => item[validatedItemId] === matchTo);
     }
 
@@ -614,6 +617,7 @@
                 value = item;
             }
 
+            clearTimeout(itemSelectedTimer);
             itemSelectedTimer = setTimeout(() => {
                 if (closeListOnChange) closeList();
                 activeFocusedIndex = undefined;
@@ -747,6 +751,7 @@
     }
 
     function setListWidth() {
+        if (!container || !list) return;
         const { width } = container.getBoundingClientRect();
         list.style.width = listAutoWidth ? width + 'px' : 'auto';
     }
@@ -821,6 +826,7 @@
         if (value) {
             dispatchSelectedItem();
         } else if (previousValue) {
+            // Intentionally passing undefined to signal value was cleared
             oninput?.(value);
         }
     });

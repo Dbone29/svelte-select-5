@@ -15,10 +15,12 @@ Override the following CSS custom properties (variables) to style svelte-select 
 - `--chevron-color`
 - `--chevron-height`
 - `--chevron-icon-colour`
+- `--chevron-icon-height`
 - `--chevron-icon-width`
 - `--chevron-pointer-events`
 - `--chevron-width`
 - `--clear-icon-color`
+- `--clear-icon-height`
 - `--clear-icon-width`
 - `--clear-select-color`
 - `--clear-select-focus-outline`
