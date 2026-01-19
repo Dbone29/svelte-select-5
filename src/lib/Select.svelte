@@ -45,19 +45,21 @@
     import ClearIcon from './ClearIcon.svelte';
     import LoadingIcon from './LoadingIcon.svelte';
 
-    // Performance: Shallow equality comparison (faster than JSON.stringify)
+    // Performance: Polymorphic shallow equality comparison (faster than JSON.stringify)
     function shallowEqual(a, b) {
         if (a === b) return true;
         if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+
+        // Handle arrays
+        if (Array.isArray(a) && Array.isArray(b)) {
+            if (a.length !== b.length) return false;
+            return a.every((item, i) => shallowEqual(item, b[i]));
+        }
+
+        // Handle objects
         const keysA = Object.keys(a);
         if (keysA.length !== Object.keys(b).length) return false;
         return keysA.every(key => a[key] === b[key]);
-    }
-
-    function arrayShallowEqual(a, b) {
-        if (a === b) return true;
-        if (!a || !b || a.length !== b.length) return false;
-        return a.every((item, i) => shallowEqual(item, b[i]));
     }
 
     // Props with $props() rune
@@ -168,22 +170,23 @@
 
     // Internal state
     let timeout;
-    let activeValue = $state(undefined);
-    let prev_value = $state(undefined);
-    let prev_filterText = $state(undefined);
-    let prev_multiple = $state(undefined);
+    let activeFocusedIndex = $state(undefined);
+    let previousValue = $state(undefined);
+    let previousFilterText = $state(undefined);
+    let previousMultiple = $state(undefined);
     let list = $state(null);
     let isScrolling = $state(false);
     let prefloat = $state(true);
     let _inputAttributes = $state({});
-    let prevJustValue = $state(undefined);
+    let previousJustValue = $state(undefined);
     let pendingJustValue = $state(undefined);
-    let prevItemsRef = $state(undefined);
+    let previousItemsRef = $state(undefined);
     let loadRequestVersion = 0;
     let isScrollingTimer;
+    let itemSelectedTimer;
 
     // Validated props using $derived to avoid state_referenced_locally warning
-    const _itemId = $derived.by(() => {
+    const validatedItemId = $derived.by(() => {
         if (typeof itemId !== 'string') {
             console.warn('[svelte-select-5] itemId must be a string, using "value"');
             return 'value';
@@ -191,7 +194,7 @@
         return itemId;
     });
 
-    const _label = $derived.by(() => {
+    const validatedLabel = $derived.by(() => {
         if (typeof label !== 'string') {
             console.warn('[svelte-select-5] label must be a string, using "label"');
             return 'label';
@@ -199,7 +202,7 @@
         return label;
     });
 
-    const _loadOptions = $derived.by(() => {
+    const validatedLoadOptions = $derived.by(() => {
         if (loadOptions !== undefined && typeof loadOptions !== 'function') {
             console.warn('[svelte-select-5] loadOptions must be a function');
             return undefined;
@@ -232,9 +235,9 @@
     // Helper functions
     function setValue() {
         if (typeof value === 'string') {
-            let item = (items || []).find((item) => item[_itemId] === value);
+            let item = (items || []).find((item) => item[validatedItemId] === value);
             value = item || {
-                [_itemId]: value,
+                [validatedItemId]: value,
                 label: value,
             };
         } else if (multiple && Array.isArray(value) && value.length > 0) {
@@ -317,7 +320,7 @@
 
     function dispatchSelectedItem() {
         if (multiple) {
-            if (!arrayShallowEqual(value, prev_value)) {
+            if (!shallowEqual(value, previousValue)) {
                 if (checkValueForDuplicates()) {
                     oninput?.(value);
                 }
@@ -325,24 +328,22 @@
             return;
         }
 
-        if (!prev_value || value[_itemId] !== prev_value[_itemId]) {
+        if (!previousValue || value[validatedItemId] !== previousValue[validatedItemId]) {
             oninput?.(value);
         }
     }
 
-    function setupMulti() {
-        if (value && !Array.isArray(value)) {
+    function syncValueToMode(isMultiple) {
+        if (isMultiple && value && !Array.isArray(value)) {
             value = [value];
+        } else if (!isMultiple && value) {
+            value = null;
         }
-    }
-
-    function setupSingle() {
-        if (value) value = null;
     }
 
     function setValueIndexAsHoverIndex() {
         const valueIndex = filteredItems.findIndex((i) => {
-            return i[_itemId] === value[_itemId];
+            return i[validatedItemId] === value[validatedItemId];
         });
 
         checkHoverSelectable(valueIndex, true);
@@ -360,9 +361,9 @@
     }
 
     function setupFilterText() {
-        if (!_loadOptions && filterText.length === 0) return;
+        if (!validatedLoadOptions && filterText.length === 0) return;
 
-        if (_loadOptions) {
+        if (validatedLoadOptions) {
             debounce(async function () {
                 const currentVersion = ++loadRequestVersion;
                 loading = true;
@@ -372,13 +373,14 @@
                         if (event === 'error') onerror?.(data);
                         if (event === 'loaded') onloaded?.(data);
                     },
-                    loadOptions: _loadOptions,
+                    loadOptions: validatedLoadOptions,
                     convertStringItemsToObjects,
                     filterText,
                 });
 
                 // Ignore stale responses from earlier requests
                 if (currentVersion !== loadRequestVersion) {
+                    loading = false;
                     return;
                 }
 
@@ -397,7 +399,7 @@
             listOpen = true;
 
             if (multiple) {
-                activeValue = undefined;
+                activeFocusedIndex = undefined;
             }
         }
     }
@@ -405,9 +407,9 @@
     function computeJustValue() {
         if (!value) return multiple ? null : undefined;
         if (multiple) {
-            return value.map((item) => item?.[_itemId]).filter(id => id !== undefined);
+            return value.map((item) => item?.[validatedItemId]).filter(id => id !== undefined);
         }
-        const id = value[_itemId];
+        const id = value[validatedItemId];
         return id !== undefined ? id : undefined;
     }
 
@@ -419,7 +421,7 @@
         let noDuplicates = true;
 
         for (const val of value) {
-            const id = val[_itemId];
+            const id = val[validatedItemId];
             if (seen.has(id)) {
                 noDuplicates = false;
             } else {
@@ -433,13 +435,13 @@
     }
 
     function findItem(selection) {
-        let matchTo = selection ? selection[_itemId] : value[_itemId];
-        return items.find((item) => item[_itemId] === matchTo);
+        let matchTo = selection ? selection[validatedItemId] : value[validatedItemId];
+        return items.find((item) => item[validatedItemId] === matchTo);
     }
 
     function updateValueDisplay(items) {
         if (!items || items.length === 0 || items.some((item) => typeof item !== 'object')) return;
-        if (!value || (multiple ? value.some((selection) => !selection || !selection[_itemId]) : !value[_itemId])) return;
+        if (!value || (multiple ? value.some((selection) => !selection || !selection[validatedItemId]) : !value[validatedItemId])) return;
 
         if (Array.isArray(value)) {
             // Check if any value needs updating - compare properties, not references
@@ -448,7 +450,7 @@
             const newValue = value.map((selection) => {
                 const found = findItem(selection);
                 // Only update if found item has different properties (not just different reference)
-                if (found && found[_itemId] === selection[_itemId]) {
+                if (found && found[validatedItemId] === selection[validatedItemId]) {
                     // Same itemId - check if other properties differ using shallow comparison
                     if (!shallowEqual(found, selection)) {
                         needsUpdate = true;
@@ -463,7 +465,7 @@
         } else {
             const found = findItem();
             // Only update if found item has different properties
-            if (found && found[_itemId] === value[_itemId]) {
+            if (found && found[validatedItemId] === value[validatedItemId]) {
                 if (!shallowEqual(found, value)) {
                     value = found;
                 }
@@ -499,12 +501,13 @@
                 if (listOpen) {
                     if (filteredItems.length === 0) break;
                     const hoverItem = filteredItems[hoverItemIndex];
+                    if (!hoverItem) break;
 
-                    if (value && !multiple && value[_itemId] === hoverItem[_itemId]) {
+                    if (value && !multiple && value[validatedItemId] === hoverItem[validatedItemId]) {
                         closeList();
                         break;
                     } else {
-                        handleSelect(filteredItems[hoverItemIndex]);
+                        handleSelect(hoverItem);
                     }
                 }
 
@@ -516,7 +519,7 @@
                     setHoverIndex(1);
                 } else {
                     listOpen = true;
-                    activeValue = undefined;
+                    activeFocusedIndex = undefined;
                 }
 
                 break;
@@ -527,7 +530,7 @@
                     setHoverIndex(-1);
                 } else {
                     listOpen = true;
-                    activeValue = undefined;
+                    activeFocusedIndex = undefined;
                 }
 
                 break;
@@ -535,7 +538,7 @@
                 if (listOpen && focused) {
                     if (
                         filteredItems.length === 0 ||
-                        (value && value[_itemId] === filteredItems[hoverItemIndex][_itemId])
+                        (value && value[validatedItemId] === filteredItems[hoverItemIndex][validatedItemId])
                     )
                         return closeList();
 
@@ -549,26 +552,26 @@
                 if (!multiple || filterText.length > 0) return;
 
                 if (multiple && value && value.length > 0) {
-                    handleMultiItemClear(activeValue !== undefined ? activeValue : value.length - 1);
-                    if (activeValue === 0 || activeValue === undefined) break;
-                    activeValue = value.length > activeValue ? activeValue - 1 : undefined;
+                    handleMultiItemClear(activeFocusedIndex !== undefined ? activeFocusedIndex : value.length - 1);
+                    if (activeFocusedIndex === 0 || activeFocusedIndex === undefined) break;
+                    activeFocusedIndex = value.length > activeFocusedIndex ? activeFocusedIndex - 1 : undefined;
                 }
 
                 break;
             case 'ArrowLeft':
                 if (!value || !multiple || filterText.length > 0) return;
-                if (activeValue === undefined) {
-                    activeValue = value.length - 1;
-                } else if (value.length > activeValue && activeValue !== 0) {
-                    activeValue -= 1;
+                if (activeFocusedIndex === undefined) {
+                    activeFocusedIndex = value.length - 1;
+                } else if (value.length > activeFocusedIndex && activeFocusedIndex !== 0) {
+                    activeFocusedIndex -= 1;
                 }
                 break;
             case 'ArrowRight':
-                if (!value || !multiple || filterText.length > 0 || activeValue === undefined) return;
-                if (activeValue === value.length - 1) {
-                    activeValue = undefined;
-                } else if (activeValue < value.length - 1) {
-                    activeValue += 1;
+                if (!value || !multiple || filterText.length > 0 || activeFocusedIndex === undefined) return;
+                if (activeFocusedIndex === value.length - 1) {
+                    activeFocusedIndex = undefined;
+                } else if (activeFocusedIndex < value.length - 1) {
+                    activeFocusedIndex += 1;
                 }
                 break;
         }
@@ -587,7 +590,7 @@
             onblur?.(e);
             closeList();
             focused = false;
-            activeValue = undefined;
+            activeFocusedIndex = undefined;
             input?.blur();
         }
     }
@@ -606,9 +609,9 @@
             if (item.groupHeader && !item.selectable) return;
             value = multiple ? (value ? value.concat([item]) : [item]) : (value = item);
 
-            setTimeout(() => {
+            itemSelectedTimer = setTimeout(() => {
                 if (closeListOnChange) closeList();
-                activeValue = undefined;
+                activeFocusedIndex = undefined;
                 onchange?.(value);
                 onselect?.(selection);
             });
@@ -626,9 +629,9 @@
         let selected = undefined;
 
         if (_multiple && value.length > 0) {
-            selected = value.map((v) => v[_label]).join(', ');
+            selected = value.map((v) => v[validatedLabel]).join(', ');
         } else {
-            selected = value[_label];
+            selected = value[validatedLabel];
         }
 
         return ariaValues(selected);
@@ -639,7 +642,7 @@
         let _item = filteredItems[hoverItemIndex];
         if (listOpen && _item) {
             let count = filteredItems ? filteredItems.length : 0;
-            return ariaListOpen(_item[_label], count);
+            return ariaListOpen(_item[validatedLabel], count);
         } else {
             return ariaFocused();
         }
@@ -671,7 +674,7 @@
     function handleItemClick(args) {
         const { item, i } = args;
         if (item?.selectable === false) return;
-        if (value && !multiple && value[_itemId] === item[_itemId]) return closeList();
+        if (value && !multiple && value[validatedItemId] === item[validatedItemId]) return closeList();
         if (isItemSelectable(item)) {
             hoverItemIndex = i;
             handleSelect(item);
@@ -721,16 +724,9 @@
         return value && value[itemId] === item[itemId];
     }
 
-    function isItemFirst(itemIndex) {
-        return itemIndex === 0;
-    }
-
     function isItemSelectable(item) {
         return (item.groupHeader && item.selectable) || item.selectable || !item.hasOwnProperty('selectable');
     }
-
-    const activeScroll = scrollAction;
-    const hoverScroll = scrollAction;
 
     function scrollAction(node) {
         return {
@@ -761,14 +757,14 @@
 
     // Derived values - order matters! filteredItems must come before ariaContext
     let filteredItems = $derived(filter({
-        loadOptions: _loadOptions,
+        loadOptions: validatedLoadOptions,
         filterText,
         items,
         multiple,
         value,
-        itemId: _itemId,
+        itemId: validatedItemId,
         groupBy,
-        label: _label,
+        label: validatedLabel,
         filterSelectedItems,
         itemFilter,
         convertStringItemsToObjects,
@@ -777,25 +773,22 @@
     let hasValue = $derived(multiple ? value && value.length > 0 : value);
     let hideSelectedItem = $derived(hasValue && filterText.length > 0);
     let showClear = $derived(hasValue && clearable && !disabled && !loading);
-    let placeholderText = $derived(
-        placeholderAlwaysShow && multiple
-            ? placeholder
-            : multiple && value?.length === 0
-            ? placeholder
-            : value
-            ? ''
-            : placeholder
-    );
+    function getPlaceholderText() {
+        if (placeholderAlwaysShow && multiple) return placeholder;
+        if (multiple && !value?.length) return placeholder;
+        return value ? '' : placeholder;
+    }
+    let placeholderText = $derived(getPlaceholderText());
     let ariaSelection = $derived(value ? handleAriaSelection(multiple) : '');
     let ariaContext = $derived(handleAriaContent());
-    let listDom = $derived(!!list);
+    let isListRendered = $derived(!!list);
     let scrollToHoverItem = $derived(hoverItemIndex);
 
     // Effects (side effects replacing reactive statements)
     $effect.pre(() => {
-        prev_value = value;
-        prev_filterText = filterText;
-        prev_multiple = multiple;
+        previousValue = value;
+        previousFilterText = filterText;
+        previousMultiple = multiple;
     });
 
     $effect(() => {
@@ -809,10 +802,10 @@
     // Consolidated: Multiple-mode effects
     $effect(() => {
         if (multiple) {
-            setupMulti();
+            syncValueToMode(true);
             if (value && value.length > 1) checkValueForDuplicates();
-        } else if (prev_multiple) {
-            setupSingle();
+        } else if (previousMultiple) {
+            syncValueToMode(false);
         }
     });
 
@@ -820,7 +813,7 @@
     $effect(() => {
         if (value) {
             dispatchSelectedItem();
-        } else if (prev_value) {
+        } else if (previousValue) {
             oninput?.(value);
         }
     });
@@ -830,7 +823,7 @@
     });
 
     $effect(() => {
-        if (filterText !== prev_filterText) setupFilterText();
+        if (filterText !== previousFilterText) setupFilterText();
     });
 
     $effect(() => {
@@ -840,14 +833,14 @@
     // Only run updateValueDisplay when items content actually changes (not just reference)
     // This prevents loops when parent components create new array references on each render
     $effect(() => {
-        if (items !== prevItemsRef) {
+        if (items !== previousItemsRef) {
             // Use $state.snapshot() to compare plain objects, avoiding proxy identity issues
             const itemsSnapshot = items ? $state.snapshot(items) : items;
-            const prevSnapshot = prevItemsRef ? $state.snapshot(prevItemsRef) : prevItemsRef;
-            if (!arrayShallowEqual(itemsSnapshot, prevSnapshot)) {
+            const prevSnapshot = previousItemsRef ? $state.snapshot(previousItemsRef) : previousItemsRef;
+            if (!shallowEqual(itemsSnapshot, prevSnapshot)) {
                 updateValueDisplay(items);
             }
-            prevItemsRef = items;
+            previousItemsRef = items;
         }
     });
 
@@ -858,9 +851,9 @@
     // Helper function to resolve justValue to value
     function resolveJustValue(jv) {
         if (multiple) {
-            value = jv ? items.filter(item => jv.includes(item[_itemId])) : null;
+            value = jv ? items.filter(item => jv.includes(item[validatedItemId])) : null;
         } else {
-            value = jv != null ? items.find(item => item[_itemId] === jv) ?? null : null;
+            value = jv != null ? items.find(item => item[validatedItemId] === jv) ?? null : null;
         }
     }
 
@@ -872,7 +865,7 @@
         const valuesMatch = Array.isArray(justValue) && Array.isArray(computed)
             ? justValue.length === computed.length && justValue.every((v, i) => v === computed[i])
             : justValue === computed;
-        const isExternalChange = justValue !== prevJustValue && !valuesMatch;
+        const isExternalChange = justValue !== previousJustValue && !valuesMatch;
 
         if (isExternalChange) {
             if (!items) {
@@ -891,7 +884,7 @@
             pendingJustValue = undefined;
         }
 
-        prevJustValue = justValue;
+        previousJustValue = justValue;
     });
 
     // Read-only props - always reflect current state, external changes are ignored
@@ -937,6 +930,7 @@
     onDestroy(() => {
         clearTimeout(timeout);
         clearTimeout(isScrollingTimer);
+        clearTimeout(itemSelectedTimer);
         list?.remove();
     });
 </script>
@@ -980,19 +974,18 @@
                         tabindex="-1"
                         role="none">
                         <div
-                            use:activeScroll={{ scroll: isItemActive(item, value, _itemId), listDom }}
-                            use:hoverScroll={{ scroll: scrollToHoverItem === i, listDom }}
+                            use:scrollAction={{ scroll: isItemActive(item, value, validatedItemId) || scrollToHoverItem === i, isListRendered }}
                             class="item"
                             class:list-group-title={item.groupHeader}
-                            class:active={isItemActive(item, value, _itemId)}
-                            class:first={isItemFirst(i)}
+                            class:active={isItemActive(item, value, validatedItemId)}
+                            class:first={i === 0}
                             class:hover={hoverItemIndex === i}
                             class:group-item={item.groupItem}
                             class:not-selectable={item?.selectable === false}>
                             {#if itemSnippet}
                                 {@render itemSnippet({ item, index: i })}
                             {:else}
-                                {item?.[_label]}
+                                {item?.[validatedLabel]}
                             {/if}
                         </div>
                     </div>
@@ -1029,7 +1022,7 @@
                 {#each value as item, i}
                     <div
                         class="multi-item"
-                        class:active={activeValue === i}
+                        class:active={activeFocusedIndex === i}
                         class:disabled
                         onclick={(e) => { e.preventDefault(); if (multiFullItemClearable) handleMultiItemClear(i); }}
                         onkeydown={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -1038,7 +1031,7 @@
                             {#if selectionSnippet}
                                 {@render selectionSnippet({ selection: item, index: i })}
                             {:else}
-                                {item[_label]}
+                                {item[validatedLabel]}
                             {/if}
                         </span>
 
@@ -1060,7 +1053,7 @@
                     {#if selectionSnippet}
                         {@render selectionSnippet({ selection: value })}
                     {:else}
-                        {value[_label]}
+                        {value[validatedLabel]}
                     {/if}
                 </div>
             {/if}

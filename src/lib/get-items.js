@@ -27,24 +27,24 @@
  * @returns {Promise<GetItemsResult|undefined>} Result object or undefined if cancelled
  */
 export default async function getItems({ dispatch, loadOptions, convertStringItemsToObjects, filterText }) {
-    let res = await loadOptions(filterText).catch((err) => {
+    let loadedItems = await loadOptions(filterText).catch((err) => {
         console.warn('svelte-select loadOptions error :>> ', err);
         dispatch('error', { type: 'loadOptions', details: err });
     });
 
-    if (res && !res.cancelled) {        
-        if (res) {
-            if (res && res.length > 0 && typeof res[0] !== 'object') {
-                res = convertStringItemsToObjects(res);
+    if (loadedItems && !loadedItems.cancelled) {
+        if (loadedItems) {
+            if (loadedItems && loadedItems.length > 0 && typeof loadedItems[0] !== 'object') {
+                loadedItems = convertStringItemsToObjects(loadedItems);
             }
-            
-            dispatch('loaded', { items: res });
+
+            dispatch('loaded', { items: loadedItems });
         } else {
-            res = [];
+            loadedItems = [];
         }
 
         return {
-            filteredItems: res,
+            filteredItems: loadedItems,
             loading: false,
             focused: true,
             listOpen: true,
