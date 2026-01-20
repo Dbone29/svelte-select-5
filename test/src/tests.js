@@ -218,7 +218,8 @@ test('should highlight active list item', async (t) => {
     }
   });
 
-  t.ok(document.querySelector('.list-item .active').innerHTML === 'Pizza');
+  await wait(0);
+  t.ok(document.querySelector('.list-item .active')?.textContent.trim() === 'Pizza');
 
   select.$destroy();
 });
@@ -379,7 +380,8 @@ test('selected item\'s default view', async (t) => {
     }
   });
 
-  t.ok(target.querySelector('.selected-item').innerHTML === 'Chips');
+  await wait(0);
+  t.ok(target.querySelector('.selected-item')?.textContent.trim() === 'Chips');
   select.$destroy();
 });
 
@@ -389,7 +391,8 @@ test('select view updates with value updates', async (t) => {
   });
 
   await handleSet(select, {selectedValue: {value: 'chips', label: 'Chips'}});
-  t.ok(target.querySelector('.selected-item').innerHTML === 'Chips');
+  await wait(0);
+  t.ok(target.querySelector('.selected-item')?.textContent.trim() === 'Chips');
 
   select.$destroy();
 });
@@ -446,7 +449,8 @@ test('list starts with first item in hover state', async (t) => {
   });
 
   await querySelectorClick('.svelte-select');
-  t.ok(document.querySelector('.list-item .hover').innerHTML === 'Chocolate');
+  await wait(0);
+  t.ok(document.querySelector('.list-item .hover')?.textContent.trim() === 'Chocolate');
 
   select.$destroy();
 });
@@ -463,7 +467,8 @@ test('select item from list', async (t) => {
   await handleKeyboard('ArrowDown');
   await handleKeyboard('ArrowDown');
   await handleKeyboard('Enter');
-  t.ok(document.querySelector('.selected-item').innerHTML === 'Cake');
+  await wait(0);
+  t.ok(document.querySelector('.selected-item')?.textContent.trim() === 'Cake');
 
   select.$destroy();
 });
@@ -517,8 +522,10 @@ test('blur should close list and remove focus from select', async (t) => {
     }
   });
 
-  select.$set({focused: true});
+  await select.$set({focused: true});
+  await wait(0);
   div.click();
+  await wait(0);
   div.remove();
   t.ok(!document.querySelector('.svelte-select-list'));
   t.ok(document.querySelector('.svelte-select input') !== document.activeElement);
@@ -538,14 +545,16 @@ test('blur should close list and remove focus from select but preserve filterTex
   });
 
   const selectInput = document.querySelector('.svelte-select input');
-  
-  select.$set({focused: true});
-  select.$set({filterText: 'potato'});
+
+  await select.$set({focused: true});
+  await select.$set({filterText: 'potato'});
+  await wait(0);
   div.click();
+  await wait(0);
   div.remove();
   t.ok(!document.querySelector('.svelte-select-list'));
   t.ok(selectInput !== document.activeElement);
-  
+
   await wait(0);
   t.ok(selectInput.value === 'potato');
   select.$destroy();
@@ -602,7 +611,7 @@ test('clicking Select with selected item should open list with item listed as ac
   await wait(0);
   querySelectorClick('.svelte-select');
   await wait(0);
-  t.ok(document.querySelector('.list-item .active').innerHTML === 'Cake');
+  t.ok(document.querySelector('.list-item .active')?.textContent.trim() === 'Cake');
   select.$destroy();
 });
 
@@ -673,11 +682,13 @@ test('Placeholder text should reappear when list is closed', async (t) => {
     }
   });
 
-  querySelectorClick('.svelte-select');
+  await querySelectorClick('.svelte-select');
+  await wait(0);
   div.click();
+  await wait(0);
   div.remove();
   const selectInput = document.querySelector('.svelte-select input');
-  t.equal(selectInput.attributes.placeholder.value, 'Please select');
+  t.equal(selectInput.placeholder, 'Please select');
 
   select.$destroy();
 });
@@ -739,7 +750,7 @@ test('closing list clears Select filter text', async (t) => {
   await wait(0);
   div.remove();
   const selectInput = document.querySelector('.svelte-select input');
-  t.equal(selectInput.attributes.placeholder.value, 'Please select');
+  t.equal(selectInput.placeholder, 'Please select');
 
   select.$destroy();
 });
@@ -762,7 +773,7 @@ test('closing list clears Select filter text (via blur)', async (t) => {
   await wait(0);
   div.remove();
   const selectInput = document.querySelector('.svelte-select input');
-  t.equal(selectInput.attributes.placeholder.value, 'Please select');
+  t.equal(selectInput.placeholder, 'Please select');
 
   select.$destroy();
 });
@@ -785,7 +796,7 @@ test('closing list item clears Select filter text', async (t) => {
   await wait(0);
   div.remove();
   const selectInput = document.querySelector('.svelte-select input');
-  t.equal(selectInput.attributes.placeholder.value, 'Please select');
+  t.equal(selectInput.placeholder, 'Please select');
 
   select.$destroy();
 });
@@ -814,12 +825,13 @@ test('Select input placeholder wipes while item is selected', async (t) => {
     target,
     props: {
       items,
-      selectedValue: {name: 'Item #2'},
+      selectedValue: {value: 'pizza', label: 'Pizza'},
     }
   });
 
+  await wait(0);
   const selectInput = document.querySelector('.svelte-select input');
-  t.equal(selectInput.attributes.placeholder.value, '');
+  t.equal(selectInput.placeholder, '');
 
   select.$destroy();
 });
@@ -922,13 +934,16 @@ test('Select container styles can be overridden', async (t) => {
     target,
     props: {
       items,
-      selectedValue: {name: 'Item #2'},
       containerStyles: `padding-left: 40px;`
     }
   });
 
   await wait(0);
-  t.equal(document.querySelector('.svelte-select').style.paddingLeft, `40px`);
+  const svSelect = document.querySelector('.svelte-select');
+  // Check either inline style or style attribute
+  const hasPadding = svSelect.style.paddingLeft === '40px' ||
+                     svSelect.getAttribute('style')?.includes('padding-left: 40px');
+  t.ok(hasPadding);
   select.$destroy();
 });
 
@@ -1191,7 +1206,7 @@ test('placeholder should be prop value', async (t) => {
 
   await wait(0);
   const selectInput = document.querySelector('.svelte-select input');
-  t.equal(selectInput.attributes.placeholder.value, placeholder);
+  t.equal(selectInput.placeholder, placeholder);
 
   select.$destroy();
 });
@@ -1224,12 +1239,19 @@ test('inputStyles prop applies css to select input', async (t) => {
   });
 
   await wait(0);
-  // Check individual property instead of cssText which browsers may normalize differently
-  t.equal(document.querySelector('.svelte-select input').style.paddingLeft, `40px`);
+  const inputEl = document.querySelector('.svelte-select input');
+  // Check either inline style or style attribute
+  const hasPadding = inputEl.style.paddingLeft === '40px' ||
+                     inputEl.getAttribute('style')?.includes('padding-left: 40px');
+  t.ok(hasPadding);
   select.$destroy();
 });
 
 test('items should be grouped by groupBy expression', async (t) => {
+  function groupBy(item) {
+    return item.group;
+  }
+
   const select = new Select({
     target,
     props: {
@@ -1239,13 +1261,10 @@ test('items should be grouped by groupBy expression', async (t) => {
     }
   });
 
-  function groupBy(item) {
-    return item.group;
-  }
-
-  let title = document.querySelector('.list-group-title').innerHTML;
+  await wait(0);
+  let title = document.querySelector('.list-group-title')?.textContent.trim();
   t.ok(title === 'Sweet');
-  let item = document.querySelector('.list-item .item.group-item').innerHTML; 
+  let item = document.querySelector('.list-item .item.group-item')?.textContent.trim();
   t.ok(item === 'Chocolate');
   select.$destroy();
 });
@@ -1447,19 +1466,23 @@ test('when multiple is true and value is undefined show placeholder text', async
 });
 
 test('when multiple is true clicking item in list will populate value', async (t) => {
+  let selectedValue = undefined;
+
   const select = new Select({
     target,
     props: {
       multiple: true,
       items,
-      selectedValue: undefined
+      selectedValue: undefined,
+      onchange: (val) => { selectedValue = val; }
     }
   });
 
   await querySelectorClick('.svelte-select');
   await querySelectorClick('.list-item');
+  await wait(0);
 
-  t.equal(JSON.stringify(select.selectedValue), JSON.stringify([{value: 'chocolate', label: 'Chocolate'}]));
+  t.equal(JSON.stringify(selectedValue), JSON.stringify([{value: 'chocolate', label: 'Chocolate'}]));
 
   select.$destroy();
 });
@@ -1604,8 +1627,11 @@ test('when multiple and value is populated then navigating with LeftArrow update
   const input = document.querySelector('.svelte-select input');
   input.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowLeft'}));
   input.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowLeft'}));
+  await wait(0);
 
-  t.ok(select.$capture_state().activeValue === 1);
+  // In Svelte 5, check DOM state - the second multi-item (index 1) should have .active class
+  const multiItems = document.querySelectorAll('.multi-item');
+  t.ok(multiItems[1]?.classList.contains('active'));
 
   select.$destroy();
 });
@@ -1626,7 +1652,11 @@ test('when multiple and value is populated then navigating with ArrowRight updat
   input.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowLeft'}));
   input.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowLeft'}));
   input.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowRight'}));
-  t.ok(select.$capture_state().activeValue === 1);
+  await wait(0);
+
+  // In Svelte 5, check DOM state - the second multi-item (index 1) should have .active class
+  const multiItems = document.querySelectorAll('.multi-item');
+  t.ok(multiItems[1]?.classList.contains('active'));
 
   select.$destroy();
 });
@@ -1674,9 +1704,10 @@ test('when multiple is true show each item in value if simple arrays are used', 
     }
   });
 
+  await wait(0);
   const all = target.querySelectorAll('.multi-item span');
-  t.ok(all[0].innerHTML.startsWith('pizza'));
-  t.ok(all[1].innerHTML.startsWith('chocolate'));
+  t.ok(all[0]?.textContent.trim().startsWith('pizza'));
+  t.ok(all[1]?.textContent.trim().startsWith('chocolate'));
 
   select.$destroy();
 });
@@ -1693,7 +1724,7 @@ test('when label is set you can pass a string and see the right label', async (t
   });
 
   await wait(0);
-  t.ok(document.querySelector('.selected-item').textContent === 'ONE');
+  t.ok(document.querySelector('.selected-item')?.textContent.trim() === 'ONE');
 
   select.$destroy();
 });
@@ -1712,13 +1743,13 @@ test('when getValue method is set should use that key to update value', async (t
   });
 
   await wait(0);
-  t.ok(document.querySelector('.selected-item').textContent === 'ONE');
+  t.ok(document.querySelector('.selected-item')?.textContent.trim() === 'ONE');
   await querySelectorClick('.svelte-select');
   await wait(0);
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Enter'}));
   await wait(0);
-  t.ok(capturedValue && capturedValue.id === 1);
+  t.ok(capturedValue?.id === 1);
 
   select.$destroy();
 });
@@ -1753,7 +1784,7 @@ test('when label method is supplied and value are no items then display result o
   });
 
   await wait(0);
-  t.ok(document.querySelector('.selected-item').textContent === 'This is not a label');
+  t.ok(document.querySelector('.selected-item')?.textContent.trim() === 'This is not a label');
 
   select.$destroy();
 });
@@ -1769,7 +1800,7 @@ test('when label and items is supplied then display result of label for each opt
   });
 
   await wait(0);
-  t.ok(document.querySelector('.item')?.textContent === 'This is not a label');
+  t.ok(document.querySelector('.item')?.textContent.trim() === 'This is not a label');
 
   select.$destroy();
 });
@@ -1785,7 +1816,7 @@ test('when label method and items is supplied then display result of label for e
   });
 
   await wait(0);
-  t.ok(document.querySelector('.item').textContent === 'This is not a label');
+  t.ok(document.querySelector('.item')?.textContent.trim() === 'This is not a label');
 
   select.$destroy();
 });
@@ -1817,7 +1848,7 @@ test('when selection slot render slot content', async (t) => {
   });
 
   await wait(0);
-  t.ok(document.querySelector('.selected-item').textContent === 'Slot: one');
+  t.ok(document.querySelector('.selected-item')?.textContent.trim() === 'Slot: one');
 
   select.$destroy();
 });
@@ -1957,9 +1988,10 @@ test('when items in list filter or update then first item in list should highlig
   
 
   await handleKeyboard('ArrowDown');
-  t.ok(document.querySelector('.svelte-select-list .hover').innerHTML === 'Chocolate');
+  t.ok(document.querySelector('.svelte-select-list .hover')?.textContent.trim() === 'Chocolate');
   await handleSet(select, {filterText: 'chi'});
-  t.ok(document.querySelector('.hover').innerHTML === 'Chips');
+  await wait(0);
+  t.ok(document.querySelector('.hover')?.textContent.trim() === 'Chips');
 
   select.$destroy();
 });
@@ -2064,7 +2096,7 @@ test('when items is just an array of strings then render list', async (t) => {
   });
 
   await wait(0);
-  t.ok(document.querySelector('.item').innerHTML === 'one');
+  t.ok(document.querySelector('.item')?.textContent.trim() === 'one');
 
   select.$destroy();
 });
@@ -2080,7 +2112,8 @@ test('when items are just strings then value should render', async (t) => {
     }
   });
 
-  t.ok(document.querySelector('.selected-item').innerHTML === 'one');
+  await wait(0);
+  t.ok(document.querySelector('.selected-item')?.textContent.trim() === 'one');
   select.$destroy();
 });
 
@@ -2172,9 +2205,9 @@ test('When list is open, filterText applied and Enter/Tab key pressed should sel
   await wait(0);
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Enter'}));
-  t.equal(select.selectedValue.value, 'A5');
   await wait(0);
-  t.ok(target.querySelector('.selected-item').innerHTML === 'A5');
+  // Check DOM state instead of accessing selectedValue directly
+  t.ok(target.querySelector('.selected-item')?.textContent.trim() === 'A5');
 
   select.$destroy();
 });
@@ -2316,7 +2349,7 @@ test('When prepend named slot is supplied then render content', async (t) => {
   });
 
   await wait(0);
-  t.ok(document.querySelector('.before').textContent === 'Before it all');
+  t.ok(document.querySelector('.before')?.textContent.trim() === 'Before it all');
 
   select.$destroy();
 });
@@ -2471,7 +2504,7 @@ test('When items change then value should also update', async (t) => {
 
   // Check DOM - the selection should update to show 'Loaded Fries'
   const selectedItem = target.querySelector('.selected-item');
-  t.ok(selectedItem && selectedItem.textContent === 'Loaded Fries', 'selected item should show Loaded Fries');
+  t.ok(selectedItem && selectedItem.textContent.trim() === 'Loaded Fries', 'selected item should show Loaded Fries');
 
   select.$destroy();
 
@@ -2530,7 +2563,7 @@ test('When items change then value should also update but only if found in items
 
   // Value should remain unchanged since 'chips' is not in new items
   const selectedItem = target.querySelector('.selected-item');
-  t.ok(selectedItem && selectedItem.textContent === 'Chips', 'selected item should remain Chips');
+  t.ok(selectedItem && selectedItem.textContent.trim() === 'Chips', 'selected item should remain Chips');
 
   select.$destroy();
 });
@@ -2554,7 +2587,7 @@ test('When multiple and multiFullItemClearable then clicking anywhere on the ite
   // After clicking, should have 1 item (Pizza remaining)
   const remaining = target.querySelectorAll('.multi-item');
   t.ok(remaining.length === 1, 'should have 1 item after click');
-  t.ok(remaining[0].querySelector('span').textContent === 'Pizza', 'remaining item should be Pizza');
+  t.ok(remaining[0].querySelector('span')?.textContent.trim() === 'Pizza', 'remaining item should be Pizza');
 
   multiSelect.$destroy();
 });
@@ -2628,7 +2661,7 @@ test('when ClearIcon replace clear icon', async (t) => {
   });
 
   await wait(0);
-  t.ok(target.querySelector('.clear-select div').textContent === 'x');
+  t.ok(target.querySelector('.clear-select div')?.textContent.trim() === 'x');
 
   select.$destroy();
 });
@@ -2868,7 +2901,7 @@ test('When items are updated post onMount ensure filtering still works', async (
 
   const listItems = document.querySelectorAll('.list-item .item:not(.list-group-title)');
   t.ok(listItems.length === 1, 'should have 1 filtered item');
-  t.ok(listItems[0].textContent === 'Two', 'filtered item should be Two');
+  t.ok(listItems[0]?.textContent.trim() === 'Two', 'filtered item should be Two');
 
   select.$destroy();
 });
@@ -3325,7 +3358,7 @@ test('when loadOptions and groupBy then group headers should appear', async (t) 
   await select.$set({filterText: 'potato'});
   await wait(50);
   const header = document.querySelector('.svelte-select-list .list-group-title');
-  t.ok(header.textContent === 'Sweet');
+  t.ok(header?.textContent.trim() === 'Sweet');
 
   select.$destroy();
 });
@@ -3416,7 +3449,7 @@ test('when named slot chevron show content', async (t) => {
   const select = createTestComponent(ChevronSlotTest, { target });
 
   await wait(0);
-  t.ok(document.querySelector('.chevron div').innerHTML === '⬆️');
+  t.ok(document.querySelector('.chevron div')?.textContent.trim() === '⬆️');
 
   select.$destroy();
 });
@@ -3502,7 +3535,7 @@ test('when groupHeaderSelectable false and groupBy true then group headers shoul
 
   let item = document.querySelector('.item.hover.group-item');
 
-  t.ok(item.textContent === 'Chocolate');
+  t.ok(item?.textContent.trim() === 'Chocolate');
 
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
@@ -3510,37 +3543,37 @@ test('when groupHeaderSelectable false and groupBy true then group headers shoul
 
   await wait(0);
   item = document.querySelector('.item.hover.group-item');
-  t.ok(item.textContent === 'Chips');
+  t.ok(item?.textContent.trim() === 'Chips');
 
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowUp'}));
 
   await wait(0);
   item = document.querySelector('.item.hover.group-item');
-  t.ok(item.textContent === 'Pizza');
+  t.ok(item?.textContent.trim() === 'Pizza');
 
   await select.$set({filterText: 'Ice'});
 
   await wait(0);
   item = document.querySelector('.item.hover.group-item');
-  t.ok(item.textContent === 'Ice Cream');
+  t.ok(item?.textContent.trim() === 'Ice Cream');
 
   await select.$set({filterText: ''});
 
   await wait(0);
   item = document.querySelector('.item.hover.group-item');
-  t.ok(item.textContent === 'Chocolate');
+  t.ok(item?.textContent.trim() === 'Chocolate');
 
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowUp'}));
 
   await wait(0);
   item = document.querySelector('.item.hover.group-item');
-  t.ok(item.textContent === 'Chips');
+  t.ok(item?.textContent.trim() === 'Chips');
 
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
 
   await wait(0);
   item = document.querySelector('.item.hover.group-item');
-  t.ok(item.textContent === 'Chocolate');
+  t.ok(item?.textContent.trim() === 'Chocolate');
 
   select.$destroy();
 });
@@ -3772,8 +3805,8 @@ test('when groupBy, itemId and label then list should render correctly', async (
   let titles = document.querySelectorAll('.list-group-title');
   let groupItems = document.querySelectorAll('.item.group-item');
 
-  t.ok(titles[1].textContent === 'group 2');
-  t.ok(groupItems[3].textContent === 'name 3');
+  t.ok(titles[1]?.textContent.trim() === 'group 2');
+  t.ok(groupItems[3]?.textContent.trim() === 'name 3');
 
   select.$destroy();
 });
@@ -3895,9 +3928,9 @@ test('when loadOptions and value then it should set initial value', async (t) =>
   });
 
   await wait(0);
-  t.ok(document.querySelector('.value-container .selected-item').textContent === 'cake');
+  t.ok(document.querySelector('.value-container .selected-item')?.textContent.trim() === 'cake');
   await wait(500);
-  t.ok(document.querySelector('.value-container .selected-item').textContent === 'Cake');
+  t.ok(document.querySelector('.value-container .selected-item')?.textContent.trim() === 'Cake');
 
   select.$destroy();
 });
@@ -3982,7 +4015,7 @@ test('selectedValue can be set externally', async (t) => {
 
   const selection = document.querySelector('.selected-item');
   t.ok(selection);
-  t.ok(selection.textContent === 'Pizza');
+  t.ok(selection?.textContent.trim() === 'Pizza');
 
   select.$destroy();
 });
