@@ -300,7 +300,7 @@ test('hover item updates on keyUp or keyDown', async (t) => {
 
   await handleKeyboard('ArrowDown', document.querySelector('.svelte-select-list'));
   const focusedElemBounding = document.querySelector('.list-item .hover');
-  t.equal(focusedElemBounding.innerHTML.trim(), `Pizza`);
+  t.equal(focusedElemBounding.textContent.trim(), `Pizza`);
   select.$destroy();
 });
 
@@ -617,7 +617,8 @@ test('focus on Select input updates focus state', async (t) => {
   document.querySelector('.svelte-select input').focus();
   await wait(0);
 
-  t.ok(select.focused);
+  // In Svelte 5, check DOM state instead of component prop
+  t.ok(document.querySelector('.svelte-select.focused'));
   select.$destroy();
 });
 
@@ -632,7 +633,8 @@ test('key up and down when Select focused opens list', async (t) => {
   const input = document.querySelector('.svelte-select input');
   input.focus();
   await wait(0);
-  t.ok(select.focused);
+  // In Svelte 5, check DOM state instead of component prop
+  t.ok(document.querySelector('.svelte-select.focused'));
   input.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
   await wait(0);
   t.ok(document.querySelector('.svelte-select-list'));
@@ -730,10 +732,11 @@ test('closing list clears Select filter text', async (t) => {
     }
   });
 
-  querySelectorClick('.svelte-select');
+  await querySelectorClick('.svelte-select');
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
-  select.$set({filterText: 'potato'});
+  await select.$set({filterText: 'potato'});
   div.click();
+  await wait(0);
   div.remove();
   const selectInput = document.querySelector('.svelte-select input');
   t.equal(selectInput.attributes.placeholder.value, 'Please select');
@@ -741,7 +744,7 @@ test('closing list clears Select filter text', async (t) => {
   select.$destroy();
 });
 
-test('closing list clears Select filter text', async (t) => {
+test('closing list clears Select filter text (via blur)', async (t) => {
   const div = document.createElement('div');
   document.body.appendChild(div);
 
@@ -752,10 +755,11 @@ test('closing list clears Select filter text', async (t) => {
     }
   });
 
-  querySelectorClick('.svelte-select');
+  await querySelectorClick('.svelte-select');
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
-  select.$set({filterText: 'potato'});
+  await select.$set({filterText: 'potato'});
   div.click();
+  await wait(0);
   div.remove();
   const selectInput = document.querySelector('.svelte-select input');
   t.equal(selectInput.attributes.placeholder.value, 'Please select');
@@ -774,10 +778,11 @@ test('closing list item clears Select filter text', async (t) => {
     }
   });
 
-  querySelectorClick('.svelte-select');
+  await querySelectorClick('.svelte-select');
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
-  select.$set({filterText: 'potato'});
+  await select.$set({filterText: 'potato'});
   div.click();
+  await wait(0);
   div.remove();
   const selectInput = document.querySelector('.svelte-select input');
   t.equal(selectInput.attributes.placeholder.value, 'Please select');
@@ -922,7 +927,8 @@ test('Select container styles can be overridden', async (t) => {
     }
   });
 
-  t.equal(document.querySelector('.svelte-select').style.cssText, `padding-left: 40px;`);
+  await wait(0);
+  t.equal(document.querySelector('.svelte-select').style.paddingLeft, `40px`);
   select.$destroy();
 });
 
@@ -998,7 +1004,7 @@ test(`shouldn't be able to clear a disabled Select`, async (t) => {
 });
 
 test(`two way binding between Select and it's parent component`, async (t) => {
-  const parent = new ParentContainer({
+  const parent = createTestComponent(ParentContainer, {
     target,
     props: {
       items,
