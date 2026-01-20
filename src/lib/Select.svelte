@@ -175,6 +175,7 @@
     let previousSelectedValue = $state(undefined);
     let previousFilterText = $state(undefined);
     let previousMultiple = $state(undefined);
+    let previousFocused = $state(undefined);
     let list = $state(null);
     let isScrolling = $state(false);
     let prefloat = $state(true);
@@ -800,11 +801,11 @@
     let scrollToHoverItem = $derived(hoverItemIndex);
 
     // Effects (side effects replacing reactive statements)
-    // TEST: Aktiviere nur $effect.pre
     $effect.pre(() => {
         previousSelectedValue = selectedValue;
         previousFilterText = filterText;
         previousMultiple = multiple;
+        previousFocused = focused;
     });
 
     $effect(() => {
@@ -832,19 +833,18 @@
         }
     });
 
-    // DISABLED - causes 28 test failures (83 → 55 tests)
-    // $effect(() => {
-    //     if (!focused && input) closeList();
-    // });
+    // Only close list when focus is lost (was focused, now not focused)
+    $effect(() => {
+        if (previousFocused && !focused && input) closeList();
+    });
 
     $effect(() => {
         if (filterText !== previousFilterText) setupFilterText();
     });
 
-    // DISABLED - causes 4 test failures (84 → 80 tests)
-    // $effect(() => {
-    //     if (!multiple && listOpen && selectedValue && filteredItems) setValueIndexAsHoverIndex();
-    // });
+    $effect(() => {
+        if (!multiple && listOpen && selectedValue && filteredItems) setValueIndexAsHoverIndex();
+    });
 
     // Update value display when items change (untrack previousItemsRef to prevent loop)
     $effect(() => {
@@ -924,10 +924,9 @@
         readOnlySelectedId = computeSelectedId();
     });
 
-    // DISABLED - causes 12 test failures (82 → 70 tests)
-    // $effect(() => {
-    //     if (listOpen && filteredItems && !multiple && !selectedValue) checkHoverSelectable();
-    // });
+    $effect(() => {
+        if (listOpen && filteredItems && !multiple && !selectedValue) checkHoverSelectable();
+    });
 
     $effect(() => {
         handleFilterEvent(filteredItems);
