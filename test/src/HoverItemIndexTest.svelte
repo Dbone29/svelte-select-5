@@ -9,7 +9,8 @@
 
     let selectedValue = $state(null);
 
-    let { hoverItemIndex = $bindable() } = $props();
+    // hoverItemIndex has a fallback value in Select, so we need to provide a default here
+    let { hoverItemIndex = $bindable(0) } = $props();
 </script>
 
 <Select {items} bind:selectedValue groupBy={(i) => i.group} bind:hoverItemIndex />

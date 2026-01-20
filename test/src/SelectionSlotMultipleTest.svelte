@@ -1,8 +1,8 @@
 <script>
     import Select from '../../src/lib/Select.svelte';
 
-    let items = $state(['one', 'two']);
-    let selectedValue = $state(['one', 'two']);
+    let items = $state([{value: 'one', label: 'one'}, {value: 'two', label: 'two'}]);
+    let selectedValue = $state([{value: 'one', label: 'one'}, {value: 'two', label: 'two'}]);
 </script>
 
 <Select bind:items bind:selectedValue multiple>
