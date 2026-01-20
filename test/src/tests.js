@@ -550,15 +550,15 @@ test('blur should close list and remove focus from select but preserve filterTex
     target,
     props: {
       items,
-      clearFilterTextOnBlur: false
+      clearFilterTextOnBlur: false,
+      focused: true,
+      filterText: 'potato'
     }
   });
 
+  await wait(0);
   const selectInput = document.querySelector('.svelte-select input');
 
-  await select.$set({focused: true});
-  await select.$set({filterText: 'potato'});
-  await wait(0);
   div.focus(); // Focus external element to blur select
   await wait(0);
   div.remove();
@@ -654,7 +654,7 @@ test('key up and down when Select focused opens list', async (t) => {
   await wait(0);
   // In Svelte 5, check DOM state instead of component prop
   t.ok(document.querySelector('.svelte-select.focused'));
-  input.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
+  window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
   await wait(0);
   t.ok(document.querySelector('.svelte-select-list'));
 
