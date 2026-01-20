@@ -1,11 +1,11 @@
 <script>
   import Select from '../../../src/lib/Select.svelte';
 
-  let { value = $bindable(), items } = $props();
+  let { selectedValue = $bindable(), items } = $props();
 </script>
 
 <div class="container">
-  <Select bind:value {items}></Select>
+  <Select bind:selectedValue {items}></Select>
 
-  <p class="result">{value.label}</p>
+  <p class="result">{selectedValue.label}</p>
 </div>

@@ -9,7 +9,7 @@
         { value: 'ice-cream', label: 'Ice Cream', group: 'Sweet' },
     ];
 
-    let { filterText = $bindable(), value = $bindable(undefined) } = $props();
+    let { filterText = $bindable(), selectedValue = $bindable(undefined) } = $props();
 
     async function loadOptions() {
         return items.filter((i) => i.label.toLowerCase().includes(filterText.toLowerCase()));
@@ -18,4 +18,4 @@
     const groupBy = (i) => i.group;
 </script>
 
-<Select {loadOptions} bind:filterText {groupBy} {value} />
+<Select {loadOptions} bind:filterText {groupBy} {selectedValue} />

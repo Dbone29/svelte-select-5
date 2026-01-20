@@ -11,7 +11,7 @@
  * @property {string} filterText - Current filter text
  * @property {(SelectItem|string)[]} items - Items to filter
  * @property {boolean} multiple - Multi-select mode
- * @property {SelectItem|SelectItem[]|null} value - Current value
+ * @property {SelectItem|SelectItem[]|null} selectedValue - Current selected value
  * @property {string} itemId - Property name for item ID
  * @property {string|undefined} groupBy - Property name for grouping
  * @property {boolean} filterSelectedItems - Whether to filter out selected items
@@ -31,7 +31,7 @@ export default function filter({
     filterText,
     items,
     multiple,
-    value,
+    selectedValue,
     itemId,
     groupBy,
     filterSelectedItems,
@@ -49,8 +49,8 @@ export default function filter({
     }
 
     // Pre-compute selected IDs Set for O(1) lookup instead of O(n) per item
-    const selectedIds = multiple && Array.isArray(value) && value.length > 0 && filterSelectedItems
-        ? new Set(value.map(v => v?.[itemId]))
+    const selectedIds = multiple && Array.isArray(selectedValue) && selectedValue.length > 0 && filterSelectedItems
+        ? new Set(selectedValue.map(v => v?.[itemId]))
         : null;
 
     let filterResults = items.filter((item) => {
