@@ -1692,27 +1692,33 @@ test('when label is set you can pass a string and see the right label', async (t
     }
   });
 
-  t.ok(document.querySelector('.selected-item').innerHTML === 'ONE');
+  await wait(0);
+  t.ok(document.querySelector('.selected-item').textContent === 'ONE');
 
   select.$destroy();
 });
 
 
 test('when getValue method is set should use that key to update value', async (t) => {
+  let capturedValue = null;
   const select = new Select({
     target,
     props: {
       items: [{id: 0, label: 'ONE'}, {id: 1, label: 'TWO'}],
       selectedValue: {id: 0, label: 'ONE'},
-      itemId: 'id'
+      itemId: 'id',
+      onchange: (val) => { capturedValue = val; }
     }
   });
 
-  t.ok(select.selectedValue.id === 0);
+  await wait(0);
+  t.ok(document.querySelector('.selected-item').textContent === 'ONE');
   await querySelectorClick('.svelte-select');
+  await wait(0);
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Enter'}));
-  t.ok(select.selectedValue.id === 1);
+  await wait(0);
+  t.ok(capturedValue && capturedValue.id === 1);
 
   select.$destroy();
 });
@@ -1738,7 +1744,7 @@ test('when loadOptions method is supplied and filterText has length then items s
 
 
 test('when label method is supplied and value are no items then display result of label', async (t) => {
- const select = new Select({
+  const select = new Select({
     target,
     props: {
       label: 'notLabel',
@@ -1746,8 +1752,8 @@ test('when label method is supplied and value are no items then display result o
     }
   });
 
-
-  t.ok(document.querySelector('.selected-item').innerHTML === 'This is not a label');
+  await wait(0);
+  t.ok(document.querySelector('.selected-item').textContent === 'This is not a label');
 
   select.$destroy();
 });
@@ -1762,7 +1768,8 @@ test('when label and items is supplied then display result of label for each opt
     }
   });
 
-  t.ok(document.querySelector('.item')?.innerHTML === 'This is not a label');
+  await wait(0);
+  t.ok(document.querySelector('.item')?.textContent === 'This is not a label');
 
   select.$destroy();
 });
@@ -1777,7 +1784,8 @@ test('when label method and items is supplied then display result of label for e
     }
   });
 
-  t.ok(document.querySelector('.item').innerHTML === 'This is not a label');
+  await wait(0);
+  t.ok(document.querySelector('.item').textContent === 'This is not a label');
 
   select.$destroy();
 });
@@ -1797,29 +1805,33 @@ test('when loadOptions method is supplied, multiple is true and filterText has l
   await wait(600);
   await handleKeyboard('ArrowDown');
   await handleKeyboard('Enter');
-  t.ok(document.querySelector('.multi-item span').innerHTML.startsWith('Juniper Wheat Beer'));
+  await wait(0);
+  const multiItem = document.querySelector('.multi-item span');
+  t.ok(multiItem && multiItem.textContent.startsWith('Juniper Wheat Beer'));
   select.$destroy();
 });
 
 test('when selection slot render slot content', async (t) => {
-  const select = new SelectionSlotTest({
+  const select = createTestComponent(SelectionSlotTest, {
     target
   });
 
-  t.ok(document.querySelector('.selected-item').innerHTML === 'Slot: one');
+  await wait(0);
+  t.ok(document.querySelector('.selected-item').textContent === 'Slot: one');
 
   select.$destroy();
 });
 
 test('when multiple and selection slot render slot content', async (t) => {
-  const select = new SelectionSlotMultipleTest({
+  const select = createTestComponent(SelectionSlotMultipleTest, {
     target
   });
 
+  await wait(0);
   const items = document.querySelectorAll('.multi-item span');
-  
-  t.ok(items[0].innerHTML.startsWith('Index: 0 Slot: one'));
-  t.ok(items[1].innerHTML.startsWith('Index: 1 Slot: two'));
+
+  t.ok(items[0].textContent.startsWith('Index: 0 Slot: one'));
+  t.ok(items[1].textContent.startsWith('Index: 1 Slot: two'));
 
   select.$destroy();
 });
@@ -2691,8 +2703,7 @@ test('when switching between multiple true/false ensure Select continues working
   select.$destroy();
 });
 
-// TEMPORARILY DISABLED - Tests 133+ cause loop/crash
-/*
+// Test 133
 test('when searchable is false then input should be readonly', async (t) => {
   const select = new Select({
     target,
@@ -2708,7 +2719,8 @@ test('when searchable is false then input should be readonly', async (t) => {
   select.$destroy();
 });
 
-
+// TEMPORARILY DISABLED - Tests 134+ cause loop/crash
+/*
 test('when esc key pressed should close list', async (t) => {
   const select = new Select({
     target,
