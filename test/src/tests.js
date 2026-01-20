@@ -3019,8 +3019,7 @@ test('When no value then hidden field should also have no value', async (t) => {
   select.$destroy();
 });
 
-// TEMPORARILY DISABLED - Tests 146+ need more fixes
-/*
+// TEMPORARILY DISABLED - Tests 146-148 need more fixes
 // test('When value then hidden field should have value', async (t) => {
 //   const select = new Select({
 //     target,
@@ -3078,11 +3077,13 @@ test('When listOpen then aria-context describes highlighted item', async (t) => 
     },
   });
 
+  await wait(0);
   let aria = document.querySelector('#aria-context');
-  t.ok(aria.innerHTML.includes('Chocolate'));
+  t.ok(aria.textContent.includes('Chocolate'));
   await handleKeyboard('ArrowDown');
-  t.ok(aria.innerHTML.includes('Pizza'));
-  
+  await wait(0);
+  t.ok(aria.textContent.includes('Pizza'));
+
   select.$destroy();
 });
 
@@ -3096,9 +3097,10 @@ test('When listOpen and value then aria-selection describes value', async (t) =>
     },
   });
 
+  await wait(0);
   let aria = document.querySelector('#aria-selection');
-  t.ok(aria.innerHTML.includes('Cake'));
-  
+  t.ok(aria.textContent.includes('Cake'));
+
   select.$destroy();
 });
 
@@ -3113,10 +3115,11 @@ test('When listOpen, value and multiple then aria-selection describes value', as
     },
   });
 
+  await wait(0);
   let aria = document.querySelector('#aria-selection');
-  t.ok(aria.innerHTML.includes('Cake'));
-  t.ok(aria.innerHTML.includes('Pizza'));
-    
+  t.ok(aria.textContent.includes('Cake'));
+  t.ok(aria.textContent.includes('Pizza'));
+
   select.$destroy();
 });
 
@@ -3131,9 +3134,10 @@ test('When ariaValues and value supplied, then aria-selection uses default updat
     },
   });
 
+  await wait(0);
   let aria = document.querySelector('#aria-selection');
-  t.equal(aria.innerHTML, 'Yummy Pizza in my tummy!');
-  
+  t.equal(aria.textContent, 'Yummy Pizza in my tummy!');
+
   select.$destroy();
 });
 
@@ -3149,8 +3153,8 @@ test('When ariaListOpen, listOpen, then aria-context uses default updated', asyn
 
   await wait(0);
   let aria = document.querySelector('#aria-context');
-  t.equal(aria.innerHTML, 'label: Chocolate, count: 5');
-    
+  t.equal(aria.textContent, 'label: Chocolate, count: 5');
+
   select.$destroy();
 });
 
@@ -3165,8 +3169,9 @@ test('When ariaFocused, focused value supplied, then aria-context uses default u
     },
   });
 
+  await wait(0);
   let aria = document.querySelector('#aria-context');
-  t.equal(aria.innerHTML, 'nothing to see here.');
+  t.equal(aria.textContent, 'nothing to see here.');
   select.$destroy();
 });
 
@@ -3180,9 +3185,10 @@ test('When id supplied then add to input', async (t) => {
     },
   });
 
-  let aria = document.querySelector('input[type="text"]');
-  t.equal(aria.id, 'foods');
-    
+  await wait(0);
+  let input = document.querySelector('input[type="text"]');
+  t.equal(input.id, 'foods');
+
   select.$destroy();
 });
 
@@ -3200,8 +3206,11 @@ test('allows the user to select an item by clicking with a focusable ancestor', 
   });
 
   await querySelectorClick('.svelte-select');
+  await wait(0);
   await querySelectorClick('.list-item');
-  t.equal(select.selectedValue.label, 'Chocolate');
+  await wait(0);
+  const selection = document.querySelector('.svelte-select .selected-item');
+  t.ok(selection && selection.textContent.trim() === 'Chocolate');
 
   select.$destroy();
 });
@@ -3216,14 +3225,15 @@ test('when listOpen true on page load then list should show onMount', async (t) 
     },
   });
 
+  await wait(0);
   let list = document.querySelector('.svelte-select-list');
-  
+
   t.ok(list);
 
   select.$destroy();
 });
 
-test('when listOpen true on page load then list should show onMount', async (t) => {
+test('when listOpen true on page load then list should show onMount (duplicate)', async (t) => {
   const select = new Select({
     target,
     props: {
@@ -3232,14 +3242,15 @@ test('when listOpen true on page load then list should show onMount', async (t) 
     },
   });
 
+  await wait(0);
   let list = document.querySelector('.svelte-select-list');
-  
+
   t.ok(list);
 
   select.$destroy();
 });
 
-test('when value is set check from item and show correct label', async (t) => { 
+test('when value is set check from item and show correct label', async (t) => {
   const select = new Select({
     target,
     props: {
@@ -3248,26 +3259,26 @@ test('when value is set check from item and show correct label', async (t) => {
     }
   });
 
-  select.selectedValue = 'cake';
-  t.equal(select.selectedValue.label, 'Cake');
+  await select.$set({ selectedValue: 'cake' });
+  await wait(0);
+  const selection = document.querySelector('.svelte-select .selected-item');
+  t.ok(selection && selection.textContent.trim() === 'Cake');
   select.$destroy();
 });
 
-test('when component focuses fire on:focus event', async (t) => { 
-  const select = new Select({
-    target,
-    props: {
-      items
-    }
-  });
-
+test('when component focuses fire on:focus event', async (t) => {
   let f = false;
-  select.$on('focus', () => {
-    f = true;
+  const select = new Select({
+    target,
+    props: {
+      items,
+      onfocus: () => { f = true; }
+    }
   });
 
   let ele = document.querySelector('.svelte-select input');
   ele.focus();
+  await wait(0);
 
   t.ok(f);
 
@@ -3275,29 +3286,31 @@ test('when component focuses fire on:focus event', async (t) => {
 });
 
 
-test('when component blurs fire on:blur event', async (t) => { 
+test('when component blurs fire on:blur event', async (t) => {
+  let b = false;
   const select = new Select({
     target,
     props: {
       items,
-      focused: true
+      focused: true,
+      onblur: () => { b = true; }
     }
   });
 
-  let b = false;
-  select.$on('blur', () => {
-    b = true;
-  });
-
   let ele = document.querySelector('.svelte-select input');
-  ele.blur();
+  ele.dispatchEvent(new FocusEvent('blur', { bubbles: true, relatedTarget: document.body }));
+  await wait(0);
 
   t.ok(b);
 
   select.$destroy();
 });
 
-test('when loadOptions and groupBy then group headers should appear', async (t) => { 
+test('when loadOptions and groupBy then group headers should appear', async (t) => {
+  function groupBy(item) {
+    return item.group;
+  }
+
   const select = new Select({
     target,
     props: {
@@ -3309,31 +3322,23 @@ test('when loadOptions and groupBy then group headers should appear', async (t) 
     }
   });
 
-  function groupBy(item) {
-    return item.group;
-  }
-
-  select.$set({filterText: 'potato'});
+  await select.$set({filterText: 'potato'});
   await wait(50);
   const header = document.querySelector('.svelte-select-list .list-group-title');
-  t.ok(header.innerHTML === 'Sweet');
+  t.ok(header.textContent === 'Sweet');
 
   select.$destroy();
 });
 
 test('when user selects an item then change event fires', async (t) => {
+  let value = undefined;
   const select = new Select({
     target,
     props: {
       listOpen: true,
-      items
+      items,
+      onchange: (val) => { value = JSON.stringify(val); }
     }
-  });
-
-  let value = undefined;
-
-  select.$on('change', event => {
-    value = JSON.stringify(event.detail);
   });
 
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
@@ -3346,24 +3351,20 @@ test('when user selects an item then change event fires', async (t) => {
 });
 
 test('when item selected programmatically a change event should NOT fire', async (t) => {
+  let value = undefined;
   const select = new Select({
     target,
     props: {
       listOpen: true,
-      items
+      items,
+      onchange: (val) => { value = val; }
     }
   });
 
-  let value = undefined;
-  select.$set({ selectedValue: {value: 'cake', label: 'Cake'}});
-
-  select.$on('change', event => {
-    value = event.detail;
-  });
-
+  await select.$set({ selectedValue: {value: 'cake', label: 'Cake'}});
   await wait(0);
   t.ok(value === undefined);
-  
+
   select.$destroy();
 });
 
@@ -3386,6 +3387,10 @@ test('when selectedValue is cleared then selectedId should be null', async (t) =
 });
 
 test('when items are grouped and filter text results in no items then list renders correct message', async (t) => {
+  function groupBy(item) {
+    return item.group;
+  }
+
   const select = new Select({
     target,
     props: {
@@ -3395,68 +3400,62 @@ test('when items are grouped and filter text results in no items then list rende
     }
   });
 
-  function groupBy(item) {
-    return item.group;
-  }
-
-  let title = document.querySelector('.list-group-title').innerHTML;
+  await wait(0);
+  let title = document.querySelector('.list-group-title').textContent;
   t.ok(title === 'Sweet');
-  let item = document.querySelector('.list-item .item.group-item').innerHTML; 
+  let item = document.querySelector('.list-item .item.group-item').textContent;
   t.ok(item === 'Chocolate');
-  select.filterText = 'foo';
+  await select.$set({ filterText: 'foo' });
+  await wait(0);
   let empty = document.querySelector('.svelte-select-list .empty');
   t.ok(empty);
   select.$destroy();
 });
 
 test('when named slot chevron show content', async (t) => {
-  const select = new ChevronSlotTest({
-    target,
-  });
+  const select = createTestComponent(ChevronSlotTest, { target });
 
+  await wait(0);
   t.ok(document.querySelector('.chevron div').innerHTML === '⬆️');
 
   select.$destroy();
 });
 
 test('when named slot list show content', async (t) => {
-  const select = new ListSlotTest({
-    target,
-  });
+  const select = createTestComponent(ListSlotTest, { target });
 
-  t.ok(document.querySelector('.svelte-select-list').innerHTML.trim() === 'onetwo');
+  await wait(0);
+  t.ok(document.querySelector('.svelte-select-list').textContent.trim() === 'onetwo');
 
   select.$destroy();
 });
 
 test('when named slot input-hidden', async (t) => {
-  const select = new InputHiddenSlotTest({
-    target,
-  });
+  const select = createTestComponent(InputHiddenSlotTest, { target });
 
+  await wait(0);
   t.ok(document.querySelector('input[type="hidden"][name="test"]').value.trim() === 'one');
 
   select.$destroy();
 });
 
 test('when named slot item show content', async (t) => {
-  const select = new ItemSlotTest({
-    target,
-  });
+  const select = createTestComponent(ItemSlotTest, { target });
 
-  t.ok(document.querySelector('.svelte-select-list .item').innerHTML === '* one *');
+  await wait(0);
+  t.ok(document.querySelector('.svelte-select-list .item').textContent.trim() === '* one *');
 
   select.$destroy();
 });
 
 
 test('when named slots list-prepend and list-append show content', async (t) => {
-  const select = new OuterListTest({
-    target,
-  });
+  const select = createTestComponent(OuterListTest, { target });
 
-  t.ok(document.querySelector('.svelte-select-list').innerHTML.startsWith('prepend'));
-  t.ok(document.querySelector('.svelte-select-list').innerHTML.endsWith('append'));
+  await wait(0);
+  const listContent = document.querySelector('.svelte-select-list').textContent;
+  t.ok(listContent.startsWith('prepend'));
+  t.ok(listContent.endsWith('append'));
 
   select.$destroy();
 });
@@ -3476,15 +3475,16 @@ test('when itemId and selectedId then return correct value', async (t) => {
 });
 
 test('when --item-height css variable supplied then item height should match new height', async (t) => {
-  const select = new ItemHeightTest({
-    target
-  });
+  const select = createTestComponent(ItemHeightTest, { target });
 
+  await wait(0);
   t.ok(document.querySelector('.item').offsetHeight === 50);
 
   select.$destroy();
 });
 
+// TEMPORARILY DISABLED - Tests 171+ need more fixes
+/*
 test('when --multi-item-color css variable supplied then CSS should apply', async (t) => {
   const select = new MultiItemColor({
     target
@@ -3567,21 +3567,17 @@ test('when hasError then show error styles', async (t) => {
 
 
 test('when items filter then event on:filter fires', async (t) => {
+  let event = undefined;
   const select = new Select({
     target,
     props: {
       items,
-      listOpen: true
+      listOpen: true,
+      onfilter: (data) => { event = data; }
     }
   });
 
-  let event = undefined;
-
-  select.$on('filter', (e) => {
-    event = e.detail
-  });
-
-  select.$set({filterText: 'ch'});
+  await select.$set({filterText: 'ch'});
   await wait(0);
   t.ok(event && event.length === 2);
 
