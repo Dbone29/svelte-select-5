@@ -75,12 +75,15 @@ export function createTestComponent(Component, { target, props = {} } = {}) {
         };
       }
 
-      // Check if instance has this property/method (exported functions)
-      if (instance && typeof instance[prop] === 'function') {
-        return instance[prop].bind(instance);
-      }
-      if (instance && prop in instance) {
-        return instance[prop];
+      // Check if instance has this property/method (exported functions and bindable props)
+      if (instance) {
+        flushSync(); // Ensure Svelte has processed all updates
+        if (typeof instance[prop] === 'function') {
+          return instance[prop].bind(instance);
+        }
+        if (prop in instance) {
+          return instance[prop];
+        }
       }
 
       // Return current prop value
