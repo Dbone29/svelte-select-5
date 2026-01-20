@@ -2607,11 +2607,12 @@ test('when loadOptions response returns cancelled true then dont end loading sta
 });
 
 test('when ClearIcon replace clear icon', async (t) => {
-  const select = new ClearIconSlotTest({
+  const select = createTestComponent(ClearIconSlotTest, {
     target,
   });
-  
-  t.ok(target.querySelector('.clear-select div').innerHTML === 'x');
+
+  await wait(0);
+  t.ok(target.querySelector('.clear-select div').textContent === 'x');
 
   select.$destroy();
 });
@@ -2624,11 +2625,12 @@ test('losing focus of Select should close list', async (t) => {
       listOpen: true
     }
   });
-  
-  t.ok(select.listOpen);
+
+  await wait(0);
+  t.ok(document.querySelector('.list-item'), 'list should be open initially');
   document.querySelector('.svelte-select input').blur();
-  await wait();
-  t.ok(!select.listOpen);
+  await wait(0);
+  t.ok(!document.querySelector('.list-item'), 'list should be closed after blur');
   select.$destroy();
 });
 
@@ -2645,9 +2647,11 @@ test('clicking on an external textarea should close and blur it', async (t) => {
     }
   });
 
-  t.ok(select.listOpen);
+  await wait(0);
+  t.ok(document.querySelector('.list-item'), 'list should be open initially');
   document.querySelector('textarea').focus();
-  t.ok(!select.listOpen);
+  await wait(0);
+  t.ok(!document.querySelector('.list-item'), 'list should close when external element focused');
 
   textarea.remove();
   select.$destroy();
@@ -2655,26 +2659,34 @@ test('clicking on an external textarea should close and blur it', async (t) => {
 
 // Test 132
 test('when switching between multiple true/false ensure Select continues working', async (t) => {
+  let capturedValue = null;
+
   const select = new Select({
     target,
     props: {
       items,
       listOpen: true,
-      selectedValue: {value: 'chips', label: 'Chips'}
+      selectedValue: {value: 'chips', label: 'Chips'},
+      oninput: (val) => { capturedValue = val; }
     }
   });
 
-  select.multiple = true;
-  select.loadOptions = itemsPromise;
+  await wait(0);
+  await select.$set({ multiple: true, loadOptions: itemsPromise });
+  await wait(0);
 
-  t.ok(JSON.stringify(select.selectedValue) === JSON.stringify([{value: 'chips', label: 'Chips'}]));
-  t.ok(Array.isArray(select.selectedValue));
+  // Check the multi-item element is rendered (array converted correctly)
+  const multiItem = document.querySelector('.multi-item');
+  t.ok(multiItem, 'should have multi-item element after switching to multiple');
+  t.ok(multiItem.textContent.includes('Chips'), 'multi-item should contain Chips');
 
-  select.multiple = false;
-  select.loadOptions = null;
-  select.items = [...items];
+  await select.$set({ multiple: false, loadOptions: null, items: [...items] });
+  await wait(0);
 
-  t.ok(!select.selectedValue);
+  // After switching back to single and updating items, value should be cleared
+  // Check that no selection is shown (no selected item displayed)
+  const selection = document.querySelector('.selected-item');
+  t.ok(!selection, 'should have no selection after switching back to single mode');
 
   select.$destroy();
 });
