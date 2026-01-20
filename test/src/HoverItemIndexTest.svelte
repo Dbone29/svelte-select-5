@@ -4,7 +4,7 @@
     let items = [];
 
     for (let i = 0; i < 100; i++) {
-        items.push({ label: i, value: i, group: 'a' });
+        items.push({ label: String(i), value: i, group: 'a' });
     }
 
     let selectedValue = $state(null);
