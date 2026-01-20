@@ -2602,8 +2602,7 @@ test('losing focus of Select should close list', async (t) => {
 });
 
 
-// TEMPORARILY DISABLED - Tests 130+ cause loop/crash
-/*
+// Test 131
 test('clicking on an external textarea should close and blur it', async (t) => {
   const textarea = document.createElement('textarea');
   document.body.appendChild(textarea);
@@ -2623,6 +2622,7 @@ test('clicking on an external textarea should close and blur it', async (t) => {
   select.$destroy();
 });
 
+// Test 132
 test('when switching between multiple true/false ensure Select continues working', async (t) => {
   const select = new Select({
     target,
@@ -2638,7 +2638,7 @@ test('when switching between multiple true/false ensure Select continues working
 
   t.ok(JSON.stringify(select.selectedValue) === JSON.stringify([{value: 'chips', label: 'Chips'}]));
   t.ok(Array.isArray(select.selectedValue));
-  
+
   select.multiple = false;
   select.loadOptions = null;
   select.items = [...items];
@@ -2648,6 +2648,8 @@ test('when switching between multiple true/false ensure Select continues working
   select.$destroy();
 });
 
+// TEMPORARILY DISABLED - Tests 133+ cause loop/crash
+/*
 test('when searchable is false then input should be readonly', async (t) => {
   const select = new Select({
     target,
