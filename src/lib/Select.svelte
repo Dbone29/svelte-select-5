@@ -847,7 +847,10 @@
     });
 
     $effect(() => {
-        if (!multiple && listOpen && selectedValue && filteredItems) setValueIndexAsHoverIndex();
+        if (!multiple && listOpen && selectedValue && filteredItems) {
+            // Use untrack to prevent infinite loop - setValueIndexAsHoverIndex writes hoverItemIndex
+            untrack(() => setValueIndexAsHoverIndex());
+        }
     });
 
     // Update value display when items change (untrack previousItemsRef to prevent loop)
@@ -929,7 +932,10 @@
     });
 
     $effect(() => {
-        if (listOpen && filteredItems && !multiple && !selectedValue) checkHoverSelectable();
+        if (listOpen && filteredItems && !multiple && !selectedValue) {
+            // Use untrack to prevent infinite loop - checkHoverSelectable reads/writes hoverItemIndex
+            untrack(() => checkHoverSelectable());
+        }
     });
 
     $effect(() => {

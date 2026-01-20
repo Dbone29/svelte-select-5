@@ -81,8 +81,15 @@ export function createTestComponent(Component, { target, props = {} } = {}) {
         if (typeof instance[prop] === 'function') {
           return instance[prop].bind(instance);
         }
-        if (prop in instance) {
-          return instance[prop];
+        // In Svelte 5, bindable props are accessible as properties on the mount result
+        // Try to access directly - bindable props may use getters that don't show up in 'in' check
+        try {
+          const value = instance[prop];
+          if (value !== undefined) {
+            return value;
+          }
+        } catch (e) {
+          // Property access failed, continue to other checks
         }
       }
 

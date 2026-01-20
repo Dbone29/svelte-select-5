@@ -1065,7 +1065,7 @@ test(`show ellipsis for overflowing text in a list item`, async (t) => {
 test('focusing in an external textarea should close and blur it', async (t) => {
   const textarea = document.createElement('textarea');
   document.body.appendChild(textarea);
-  
+
   const select = new Select({
     target,
     props: {
@@ -1074,9 +1074,14 @@ test('focusing in an external textarea should close and blur it', async (t) => {
     }
   });
 
+  // Focus the select input first to establish blur tracking
+  document.querySelector('.svelte-select input').focus();
+  await wait(0);
+
   textarea.focus();
   await wait(0);
-  t.ok(!select.listOpen);
+  // Check DOM state instead of component prop - list should be closed (no .list-item elements visible)
+  t.ok(!document.querySelector('.list-item'));
   textarea.remove();
   select.$destroy();
 });
@@ -1117,16 +1122,20 @@ test(`hovered item in a filtered list shows hover state`, async (t) => {
 });
 
 test(`data shouldn't be stripped from item - currently only saves name`, async (t) => {
+  let selectedValue = null;
+
   const select = new Select({
     target,
     props: {
-      items
+      items,
+      onchange: (val) => { selectedValue = val; }
     }
   });
 
   await querySelectorClick('.svelte-select');
   await querySelectorClick('.list-item');
-  t.equal(JSON.stringify(select.selectedValue), JSON.stringify({value: 'chocolate', label: 'Chocolate'}));
+  await wait(0);
+  t.equal(JSON.stringify(selectedValue), JSON.stringify({value: 'chocolate', label: 'Chocolate'}));
 
   select.$destroy();
 });
@@ -1140,9 +1149,10 @@ test('should not be able to clear when clearing is disabled', async (t) => {
     }
   });
 
-  querySelectorClick('.svelte-select');
+  await querySelectorClick('.svelte-select');
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Enter'}));
+  await wait(0);
 
   t.ok(!document.querySelector('.clear-select'));
 
@@ -1158,8 +1168,9 @@ test('should not be able to search when searching is disabled', async (t) => {
     }
   });
 
+  await wait(0);
   const selectInput = document.querySelector('.svelte-select input');
-  t.ok(selectInput.attributes.readonly);
+  t.ok(selectInput.hasAttribute('readonly'));
 
   select.$destroy();
 });
@@ -1178,6 +1189,7 @@ test('placeholder should be prop value', async (t) => {
     }
   });
 
+  await wait(0);
   const selectInput = document.querySelector('.svelte-select input');
   t.equal(selectInput.attributes.placeholder.value, placeholder);
 
@@ -1211,7 +1223,9 @@ test('inputStyles prop applies css to select input', async (t) => {
     }
   });
 
-  t.equal(document.querySelector('.svelte-select input').style.cssText, `padding-left: 40px;`);
+  await wait(0);
+  // Check individual property instead of cssText which browsers may normalize differently
+  t.equal(document.querySelector('.svelte-select input').style.paddingLeft, `40px`);
   select.$destroy();
 });
 
@@ -1256,84 +1270,88 @@ test('clicking group header should not make a selected', async (t) => {
 });
 
 test('clicking an item with selectable: false should not make a selected', async (t) => {
+  let selectedValue = null;
   const select = new Select({
     target,
     props: {
       listOpen: true,
-      items: itemsWithSelectable
+      items: itemsWithSelectable,
+      onchange: (val) => { selectedValue = val; }
     }
   });
 
   await wait(0);
   await querySelectorClick('.list-item:nth-child(1)');
-  t.ok(!select.selectedValue);
-  select.listOpen = true;
+  await wait(0);
+  t.ok(!selectedValue);
+  await select.$set({ listOpen: true });
   await querySelectorClick('.list-item:nth-child(4)')
-  t.ok(!select.selectedValue);
+  await wait(0);
+  t.ok(!selectedValue);
 
   select.$destroy();
 });
 
 test('clicking an item with selectable not specified should make a selected', async (t) => {
+  let selectedValue = null;
   const select = new Select({
     target,
     props: {
       listOpen: true,
-      items: itemsWithSelectable
+      items: itemsWithSelectable,
+      onchange: (val) => { selectedValue = val; }
     }
   });
 
   await wait(0);
   document.querySelector('.list-item:nth-child(2)').click();
-  t.ok(select.selectedValue && select.selectedValue.value == 'selectableDefault');
+  await wait(0);
+  t.ok(selectedValue && selectedValue.value == 'selectableDefault');
 
   select.$destroy();
 });
 
 test('clicking an item with selectable: true should make a selected', async (t) => {
+  let selectedValue = null;
   const select = new Select({
     target,
     props: {
       listOpen: true,
-      items: itemsWithSelectable
+      items: itemsWithSelectable,
+      onchange: (val) => { selectedValue = val; }
     }
   });
 
   await wait(0);
   await querySelectorClick('.list-item:nth-child(3)')
-  t.ok(select.selectedValue && select.selectedValue.value == 'selectableTrue');
+  await wait(0);
+  t.ok(selectedValue && selectedValue.value == 'selectableTrue');
   select.$destroy();
 });
 
 test('when groupBy, no active item and keydown enter is fired then list should close without selecting item', async (t) => {
+  let selectedValue = null;
   const select = new Select({
     target,
     props: {
       listOpen: true,
       items: itemsWithGroup,
-      groupBy: (item) => item.group
+      groupBy: (item) => item.group,
+      onchange: (val) => { selectedValue = val; }
     }
   });
 
   await wait(0);
   await querySelectorClick('.svelte-select');
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Enter'}));
-  t.ok(!select.selectedValue);
+  await wait(0);
+  t.ok(!selectedValue);
 
   select.$destroy();
 });
 
 test('when groupHeaderSelectable clicking group header should select createGroupHeaderItem(groupValue,item)', async (t) => {
-  const select = new Select({
-    target,
-    props: {
-      listOpen: true,
-      items: itemsWithGroup,
-      groupHeaderSelectable: true,
-      groupBy,
-      createGroupHeaderItem
-    }
-  });
+  let selectedValue = null;
 
   function groupBy(item) {
     return item.group;
@@ -1345,6 +1363,18 @@ test('when groupHeaderSelectable clicking group header should select createGroup
     };
   }
 
+  const select = new Select({
+    target,
+    props: {
+      listOpen: true,
+      items: itemsWithGroup,
+      groupHeaderSelectable: true,
+      groupBy,
+      createGroupHeaderItem,
+      onchange: (val) => { selectedValue = val; }
+    }
+  });
+
   await wait(0);
 
   const groupHeaderItem = select.getFilteredItems()[0];
@@ -1353,9 +1383,10 @@ test('when groupHeaderSelectable clicking group header should select createGroup
   });
 
   await querySelectorClick('.list-item');
+  await wait(0);
 
-  t.ok(select.selectedValue.groupHeader);
-  t.equal(select.selectedValue.label, createGroupHeaderItem(groupBy(groupItem), groupItem).label);
+  t.ok(selectedValue && selectedValue.groupHeader);
+  t.equal(selectedValue && selectedValue.label, createGroupHeaderItem(groupBy(groupItem), groupItem).label);
 
   select.$destroy();
 });
