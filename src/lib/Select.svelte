@@ -46,20 +46,33 @@
     import LoadingIcon from './LoadingIcon.svelte';
 
     // Performance: Polymorphic shallow equality comparison (faster than JSON.stringify)
+    // Uses $state.snapshot() to avoid proxy equality mismatch warnings
     function shallowEqual(a, b) {
-        if (a === b) return true;
-        if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+        // Get plain values from potential proxies
+        const plainA = a && typeof a === 'object' ? $state.snapshot(a) : a;
+        const plainB = b && typeof b === 'object' ? $state.snapshot(b) : b;
+
+        if (plainA === plainB) return true;
+        if (!plainA || !plainB || typeof plainA !== 'object' || typeof plainB !== 'object') return false;
 
         // Handle arrays
-        if (Array.isArray(a) && Array.isArray(b)) {
-            if (a.length !== b.length) return false;
-            return a.every((item, i) => shallowEqual(item, b[i]));
+        if (Array.isArray(plainA) && Array.isArray(plainB)) {
+            if (plainA.length !== plainB.length) return false;
+            return plainA.every((item, i) => {
+                if (item && typeof item === 'object' && plainB[i] && typeof plainB[i] === 'object') {
+                    const keysA = Object.keys(item);
+                    const keysB = Object.keys(plainB[i]);
+                    if (keysA.length !== keysB.length) return false;
+                    return keysA.every(key => item[key] === plainB[i][key]);
+                }
+                return item === plainB[i];
+            });
         }
 
         // Handle objects
-        const keysA = Object.keys(a);
-        if (keysA.length !== Object.keys(b).length) return false;
-        return keysA.every(key => a[key] === b[key]);
+        const keysA = Object.keys(plainA);
+        if (keysA.length !== Object.keys(plainB).length) return false;
+        return keysA.every(key => plainA[key] === plainB[key]);
     }
 
     // Props with $props() rune
@@ -856,22 +869,18 @@
     // Update value display when items change (untrack previousItemsRef to prevent loop)
     $effect(() => {
         const prevRef = untrack(() => previousItemsRef);
-        // Use snapshot to avoid proxy equality issues
-        const itemsSnapshot = items ? $state.snapshot(items) : items;
-        const prevSnapshot = prevRef ? $state.snapshot(prevRef) : prevRef;
-        if (itemsSnapshot !== prevSnapshot) {
-            const itemsLen = items?.length ?? 0;
-            const prevLen = prevRef?.length ?? 0;
-            const hasChanged = itemsLen !== prevLen ||
-                (itemsLen > 0 && (
-                    items[0]?.[validatedItemId] !== prevRef?.[0]?.[validatedItemId] ||
-                    items[itemsLen - 1]?.[validatedItemId] !== prevRef?.[prevLen - 1]?.[validatedItemId]
-                ));
-            if (hasChanged) {
-                updateValueDisplay(items);
-            }
-            previousItemsRef = items;
+        const itemsLen = items?.length ?? 0;
+        const prevLen = prevRef?.length ?? 0;
+        // Compare by content, not reference, to avoid proxy issues
+        const hasChanged = itemsLen !== prevLen ||
+            (itemsLen > 0 && (
+                items[0]?.[validatedItemId] !== prevRef?.[0]?.[validatedItemId] ||
+                items[itemsLen - 1]?.[validatedItemId] !== prevRef?.[prevLen - 1]?.[validatedItemId]
+            ));
+        if (hasChanged) {
+            updateValueDisplay(items);
         }
+        previousItemsRef = items;
     });
 
     // Sync selectedValue → selectedId
