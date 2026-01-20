@@ -1,5 +1,24 @@
 # svelte-select-5 changelog
 
+## 7.0.3 (2026-01-20)
+
+**Bug Fixes:**
+
+* Fixed `state_proxy_equality_mismatch` warnings in Svelte 5
+  - Updated `shallowEqual()` to use `$state.snapshot()` for proxy-safe comparisons
+  - Fixed items change detection to compare by content, not reference
+
+* Removed external API calls from tests
+  - Replaced `punkapi.com` API calls with mock `loadOptions` functions
+  - Removed unused `getPosts` function
+
+**Test Fixes:**
+
+* Fixed remaining test failures with proper timing and assertions
+* All tests now pass without warnings
+
+---
+
 ## 7.0.2 (2026-01-20)
 
 **Test Fixes:**
