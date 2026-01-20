@@ -1,5 +1,17 @@
 # svelte-select-5 changelog
 
+## 7.0.4 (2026-01-20)
+
+**New Feature:**
+
+* `startId` now works with `loadOptions` - automatically triggers initial load when `startId` is set but no items are loaded yet
+
+**Bug Fixes:**
+
+* Fixed edge case where `startId` was ignored when combined with `loadOptions` (items never loaded because `filterText` was empty)
+
+---
+
 ## 7.0.3 (2026-01-20)
 
 **Bug Fixes:**

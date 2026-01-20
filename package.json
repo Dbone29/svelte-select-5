@@ -1,6 +1,6 @@
 {
   "name": "svelte-select-5",
-  "version": "7.0.3",
+  "version": "7.0.4",
   "repository": "https://github.com/Dbone29/svelte-select-5.git",
   "description": "A <Select> component for Svelte 5 apps (fork of svelte-select)",
   "scripts": {
