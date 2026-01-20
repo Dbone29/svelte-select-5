@@ -2,10 +2,10 @@
     import Select from '../../src/lib/Select.svelte';
 
     let items = $state(['one', 'two']);
-    let value = $state('one');
+    let selectedValue = $state('one');
 </script>
 
-<Select bind:items bind:value>
+<Select bind:items bind:selectedValue>
     {#snippet selection({ selection })}
         Slot: {selection.label}
     {/snippet}

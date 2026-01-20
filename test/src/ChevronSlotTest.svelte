@@ -2,11 +2,11 @@
     import Select from '../../src/lib/Select.svelte';
 
     let items = $state(['one', 'two']);
-    let value = $state(undefined);
+    let selectedValue = $state(undefined);
     let listOpen = $state(true);
 </script>
 
-<Select bind:items bind:value bind:listOpen showChevron>
+<Select bind:items bind:selectedValue bind:listOpen showChevron>
     {#snippet chevronIcon({ listOpen })}
         <div>
             {#if listOpen}

@@ -2,10 +2,10 @@
     import Select from '../../src/lib/Select.svelte';
 
     let items = $state(['one', 'two']);
-    let value = $state('one');
+    let selectedValue = $state('one');
 </script>
 
-<Select bind:items bind:value listOpen>
+<Select bind:items bind:selectedValue listOpen>
     {#snippet list({ filteredItems })}
         {#each filteredItems as item}
             {item.label}

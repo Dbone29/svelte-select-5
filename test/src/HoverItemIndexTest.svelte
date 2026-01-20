@@ -7,15 +7,15 @@
         items.push({ label: i, value: i, group: 'a' });
     }
 
-    let value = $state(null);
+    let selectedValue = $state(null);
 
     let { hoverItemIndex = $bindable() } = $props();
 </script>
 
-<Select {items} bind:value groupBy={(i) => i.group} bind:hoverItemIndex />
+<Select {items} bind:selectedValue groupBy={(i) => i.group} bind:hoverItemIndex />
 
-{#if value}
+{#if selectedValue}
     <p>
-        Selected value: {value.label}
+        Selected value: {selectedValue.label}
     </p>
 {/if}

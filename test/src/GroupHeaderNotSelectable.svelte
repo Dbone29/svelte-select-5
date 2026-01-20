@@ -11,7 +11,7 @@
         { value: 'ice-cream', label: 'Ice Cream', group: 'Sweet' },
     ];
 
-    let value = $state(undefined);
+    let selectedValue = $state(undefined);
 </script>
 
-<Select {items} groupBy={(item) => item.group} bind:value bind:filterText />
+<Select {items} groupBy={(item) => item.group} bind:selectedValue bind:filterText />
