@@ -192,6 +192,7 @@
     let isScrollingTimer;
     let itemSelectedTimer;
     let startIdApplied = $state(false);
+    let startIdLoadTriggered = false;  // Flag to prevent repeated load triggers
     let lastFilterText = '';  // Non-reactive for effect comparison
 
     // Validated props using $derived to avoid state_referenced_locally warning
@@ -938,7 +939,8 @@
 
     // Trigger initial load when startId is set with loadOptions but no items yet
     $effect(() => {
-        if (startId !== undefined && validatedLoadOptions && !items && !loading) {
+        if (startId !== undefined && validatedLoadOptions && !items && !startIdLoadTriggered) {
+            startIdLoadTriggered = true;
             setupFilterText();
         }
     });
