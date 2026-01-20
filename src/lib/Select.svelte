@@ -936,6 +936,13 @@
         }
     });
 
+    // Trigger initial load when startId is set with loadOptions but no items yet
+    $effect(() => {
+        if (startId !== undefined && validatedLoadOptions && !items && !loading) {
+            setupFilterText();
+        }
+    });
+
     $effect.pre(() => {
         readOnlySelectedValue = selectedValue;
         readOnlySelectedId = computeSelectedId();

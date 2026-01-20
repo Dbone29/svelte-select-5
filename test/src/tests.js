@@ -4313,6 +4313,34 @@ test('startId with custom itemId sets initial value', async (t) => {
   select.$destroy();
 });
 
+test('startId with loadOptions triggers initial load and resolves value', async (t) => {
+  const mockItems = [
+    {value: 'pizza', label: 'Pizza'},
+    {value: 'cake', label: 'Cake'},
+    {value: 'chips', label: 'Chips'}
+  ];
+
+  const select = new Select({
+    target,
+    props: {
+      loadOptions: async () => {
+        await wait(50);
+        return mockItems;
+      },
+      startId: 'pizza'
+    }
+  });
+
+  // Wait for loadOptions to complete and value to resolve
+  await wait(500);
+
+  const selection = document.querySelector('.selected-item');
+  t.ok(selection, 'selection should exist');
+  t.ok(selection?.textContent.trim() === 'Pizza', 'selected item should be Pizza');
+
+  select.$destroy();
+});
+
 // ============================================
 // readOnlySelectedValue Tests
 // ============================================
