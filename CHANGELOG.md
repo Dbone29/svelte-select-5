@@ -1,5 +1,25 @@
 # svelte-select-5 changelog
 
+## 7.0.2 (2026-01-20)
+
+**Test Fixes:**
+
+* Fixed 21 failing tests for Svelte 5 compatibility:
+  - Test 19: Increased FloatingUI wait time for placement tests
+  - Test 91: Fixed multiple+groupBy verification via DOM instead of proxy access
+  - Tests 98-99: Fixed multiple mode with simple string arrays
+  - Test 106: Replaced external API with mock `loadOptions` for reliable testing
+  - Test 107: Fixed `SelectionSlotMultipleTest` to use proper object values
+  - Tests 117-119: Replaced `$on()` event handler with `oninput` callback prop
+  - Test 122: Fixed Enter selection verification via DOM
+  - Test 140: Added wait time for class prop application
+  - Test 202: Fixed `InputHiddenSlotTest` with null-safe value access
+  - Tests 212-215, 226: Added timing delays between keyboard navigation events
+  - Test 239: Fixed `HoverItemIndexTest` with default bindable value for `hoverItemIndex`
+  - Test 261: Added wait time for `startId` ignored after mount test
+
+---
+
 ## 7.0.1 (2026-01-20)
 
 **Internal Improvements:**
