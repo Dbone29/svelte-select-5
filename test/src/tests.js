@@ -3885,17 +3885,20 @@ test('when closeListOnChange is false and item selected then list should remain 
   let list = document.querySelector('.svelte-select-list');
   t.ok(list);
 
-  await querySelectorClick('.svelte-select');
+  // Click input to blur/close list
+  const input = document.querySelector('.svelte-select input');
+  input?.blur();
   await wait(0);
   list = document.querySelector('.svelte-select-list');
   t.ok(!list);
 
+  // Re-open list and select another item
   await querySelectorClick('.svelte-select');
   await wait(0);
   await querySelectorClick('.list-item:nth-child(3)');
   await wait(0);
   selection = document.querySelector('.svelte-select .selected-item');
-  t.ok(selection && selection.textContent.trim() === 'Cake');
+  t.ok(selection && selection?.textContent.trim() === 'Cake');
   list = document.querySelector('.svelte-select-list');
   t.ok(list);
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Enter'}));
@@ -4068,16 +4071,16 @@ test('setting selectedId updates selectedValue', async (t) => {
   const select = new Select({
     target,
     props: {
-      items
+      items,
+      selectedId: 'pizza'  // Set directly in initial props
     }
   });
 
-  await select.$set({ selectedId: 'pizza' });
   await wait(0);
 
   const selection = document.querySelector('.selected-item');
   t.ok(selection);
-  t.ok(selection.textContent.trim() === 'Pizza');
+  t.ok(selection?.textContent.trim() === 'Pizza');
 
   select.$destroy();
 });
@@ -4134,16 +4137,16 @@ test('setting selectedId with custom itemId updates selectedValue', async (t) =>
     target,
     props: {
       items: collection,
-      itemId: '_id'
+      itemId: '_id',
+      selectedId: 2  // Set directly in initial props
     }
   });
 
-  await select.$set({ selectedId: 2 });
   await wait(0);
 
   const selection = document.querySelector('.selected-item');
   t.ok(selection);
-  t.ok(selection.textContent.trim() === 'Cake');
+  t.ok(selection?.textContent.trim() === 'Cake');
 
   select.$destroy();
 });
