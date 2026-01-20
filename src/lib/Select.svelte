@@ -46,27 +46,19 @@
     import LoadingIcon from './LoadingIcon.svelte';
 
     // Performance: Polymorphic shallow equality comparison (faster than JSON.stringify)
-    // Uses $state.snapshot() to avoid proxy equality mismatch warnings
-    function shallowEqual(a, b) {
-        // Get plain values from potential proxies
-        const plainA = a && typeof a === 'object' ? $state.snapshot(a) : a;
-        const plainB = b && typeof b === 'object' ? $state.snapshot(b) : b;
+    // Uses $state.snapshot() at top level to avoid proxy equality mismatch warnings
+    function shallowEqual(a, b, _isNested = false) {
+        // Only snapshot at top level to avoid repeated snapshot overhead
+        const plainA = !_isNested && a && typeof a === 'object' ? $state.snapshot(a) : a;
+        const plainB = !_isNested && b && typeof b === 'object' ? $state.snapshot(b) : b;
 
         if (plainA === plainB) return true;
         if (!plainA || !plainB || typeof plainA !== 'object' || typeof plainB !== 'object') return false;
 
-        // Handle arrays
+        // Handle arrays - recursive comparison
         if (Array.isArray(plainA) && Array.isArray(plainB)) {
             if (plainA.length !== plainB.length) return false;
-            return plainA.every((item, i) => {
-                if (item && typeof item === 'object' && plainB[i] && typeof plainB[i] === 'object') {
-                    const keysA = Object.keys(item);
-                    const keysB = Object.keys(plainB[i]);
-                    if (keysA.length !== keysB.length) return false;
-                    return keysA.every(key => item[key] === plainB[i][key]);
-                }
-                return item === plainB[i];
-            });
+            return plainA.every((item, i) => shallowEqual(item, plainB[i], true));
         }
 
         // Handle objects
