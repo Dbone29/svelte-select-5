@@ -75,6 +75,14 @@ export function createTestComponent(Component, { target, props = {} } = {}) {
         };
       }
 
+      // Check if instance has this property/method (exported functions)
+      if (instance && typeof instance[prop] === 'function') {
+        return instance[prop].bind(instance);
+      }
+      if (instance && prop in instance) {
+        return instance[prop];
+      }
+
       // Return current prop value
       if (prop in currentProps) {
         return currentProps[prop];

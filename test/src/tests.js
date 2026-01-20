@@ -29,6 +29,7 @@ function querySelectorClick(selector) {
   } else {
     document.querySelector(selector).click();
   }
+  return new Promise(f => setTimeout(f, 0));
 }
 
 function handleKeyboard(key) {

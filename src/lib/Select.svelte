@@ -352,7 +352,7 @@
             return item[validatedItemId] === selectedValue[validatedItemId];
         });
 
-        checkHoverSelectable(selectedValueIndex, true);
+        checkHoverSelectable(valueIndex, true);
     }
 
     function dispatchHover(itemIndex) {
@@ -411,7 +411,7 @@
 
     function computeSelectedId() {
         if (!selectedValue) return multiple ? [] : undefined;
-        if (multiple) {
+        if (multiple && Array.isArray(selectedValue)) {
             return selectedValue.map((item) => item?.[validatedItemId]).filter(id => id !== undefined);
         }
         return selectedValue[validatedItemId];
