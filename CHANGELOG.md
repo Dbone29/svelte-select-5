@@ -1,5 +1,38 @@
 # svelte-select-5 changelog
 
+## 7.0.1 (2026-01-20)
+
+**Internal Improvements:**
+
+* Refactored internal variable names for clarity:
+  - `activeValue` → `activeFocusedIndex`
+  - `prev_value` → `previousValue`
+  - `prev_filterText` → `previousFilterText`
+  - `_itemId` → `validatedItemId`
+  - `_label` → `validatedLabel`
+  - `_loadOptions` → `validatedLoadOptions`
+
+* Consolidated `shallowEqual()` to handle both objects and arrays (removed separate `arrayShallowEqual()`)
+
+* Fixed potential race condition: `loading` state now correctly set to `false` when stale loadOptions responses are ignored
+
+* Added missing timer cleanup (`itemSelectedTimer`) in `onDestroy()`
+
+* Simplified `scrollAction` usage - merged `activeScroll` and `hoverScroll` into single action
+
+* Improved code organization and reduced duplication
+
+**Tests:**
+
+* Full test suite now passes with Svelte 5 compatibility
+* Updated all 207 tests to use Svelte 5 patterns:
+  - Changed `$on()` event handlers to callback props
+  - Changed `new Component()` to `createTestComponent()` for slot tests
+  - Replaced direct prop access with DOM-based checks
+  - Added proper async timing with `await wait(0)`
+
+---
+
 ## 7.0.0 (2026-01-19)
 
 **BREAKING CHANGES:**
