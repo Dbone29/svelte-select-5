@@ -42,28 +42,7 @@ async function handleSet(component, data) {
   return new Promise(f => setTimeout(f, 0));
 }
 
-function getPosts(filterText) {
-  filterText = filterText ? filterText.replace(' ','_') : '';
-
-  return new Promise((resolve, reject) => {
-    if (filterText.length < 2) return resolve([]);
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', `https://api.punkapi.com/v2/beers?beer_name=${filterText}`);
-    xhr.send();
-
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(JSON.parse(xhr.response).sort((a, b) => {
-          if (a.name > b.name) return 1;
-          if (a.name < b.name) return -1;
-        }).map(i => { return { value: i.id, label:i.name}}));
-      } else {
-        reject()
-      }
-    };
-  });
-}
+// Removed getPosts - external API calls replaced with mocks
 
 function resolvePromise() {
   return new Promise((resolve, reject) => {
@@ -1782,18 +1761,28 @@ test('when getValue method is set should use that key to update value', async (t
 });
 
 test('when loadOptions method is supplied and filterText has length then items should populate via promise resolve', async (t) => {
+  // Mock loadOptions instead of external API
+  const mockLoadOptions = async (filterText) => {
+    await wait(50);
+    if (!filterText || filterText.length < 2) return [];
+    return [
+      {id: 1, name: 'Juniper Pale Ale'},
+      {id: 2, name: 'Juniper IPA'}
+    ].filter(i => i.name.toLowerCase().includes(filterText.toLowerCase()));
+  };
+
   const select = new Select({
     target,
     props: {
       label: 'name',
-      loadOptions: getPosts,
+      loadOptions: mockLoadOptions,
       itemId: 'id',
     }
   });
 
   await wait(0);
   select.$set({filterText: 'Juniper'});
-  await wait(0);
+  await wait(200);
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Enter'}));
 
@@ -2657,13 +2646,18 @@ test('When multiple and filterText then items should filter out already selected
 
 test('when loadOptions and items is supplied then list should close on blur', async (t) => {
   const div = document.createElement('div');
+  div.tabIndex = 0; // Make focusable
   document.body.appendChild(div);
   let items=[{value:1, label:1}, {value:2, label:2}];
-	let loadOptions = async(filterText) => {
-		const res = await fetch(`https://api.punkapi.com/v2/beers?beer_name=${filterText}`)
-		const data = await res.json();    
-    return data.map((beer)=> ({value: beer.id, label: beer.name}));
-	}
+  // Mock loadOptions instead of external API
+  let loadOptions = async(filterText) => {
+    await wait(50);
+    if (!filterText) return [];
+    return [
+      {value: 101, label: 'Loaded Item 1'},
+      {value: 102, label: 'Loaded Item 2'}
+    ].filter(i => i.label.toLowerCase().includes(filterText.toLowerCase()));
+  }
 
   const select = new Select({
     target,
@@ -2677,8 +2671,9 @@ test('when loadOptions and items is supplied then list should close on blur', as
   window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowDown'}));
   await wait(0);
   select.$set(({ filterText: 's'}))
-  await wait(600);
-  div.click();
+  await wait(200);
+  div.focus(); // Focus external element to blur select
+  await wait(0);
   div.remove();
 
   select.$destroy();

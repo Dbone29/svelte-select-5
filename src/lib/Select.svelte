@@ -856,7 +856,10 @@
     // Update value display when items change (untrack previousItemsRef to prevent loop)
     $effect(() => {
         const prevRef = untrack(() => previousItemsRef);
-        if (items !== prevRef) {
+        // Use snapshot to avoid proxy equality issues
+        const itemsSnapshot = items ? $state.snapshot(items) : items;
+        const prevSnapshot = prevRef ? $state.snapshot(prevRef) : prevRef;
+        if (itemsSnapshot !== prevSnapshot) {
             const itemsLen = items?.length ?? 0;
             const prevLen = prevRef?.length ?? 0;
             const hasChanged = itemsLen !== prevLen ||
@@ -902,7 +905,13 @@
         const valuesMatch = Array.isArray(selectedId) && Array.isArray(computed)
             ? selectedId.length === computed.length && selectedId.every((v, i) => v === computed[i])
             : selectedId === computed;
-        const isExternalChange = selectedId !== untrack(() => previousSelectedId) && !valuesMatch;
+        // Use snapshot comparison to avoid proxy equality mismatch warnings
+        const currentIdSnapshot = selectedId !== undefined ? $state.snapshot(selectedId) : selectedId;
+        const prevIdSnapshot = untrack(() => previousSelectedId !== undefined ? $state.snapshot(previousSelectedId) : previousSelectedId);
+        const referenceDiffers = Array.isArray(currentIdSnapshot) && Array.isArray(prevIdSnapshot)
+            ? currentIdSnapshot.length !== prevIdSnapshot.length || currentIdSnapshot.some((v, i) => v !== prevIdSnapshot[i])
+            : currentIdSnapshot !== prevIdSnapshot;
+        const isExternalChange = referenceDiffers && !valuesMatch;
         if (isExternalChange) {
             if (!items) {
                 pendingSelectedId = selectedId;
