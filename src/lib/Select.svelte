@@ -187,6 +187,7 @@
     let isScrollingTimer;
     let itemSelectedTimer;
     let startIdApplied = $state(false);
+    let lastFilterText = '';  // Non-reactive for effect comparison
 
     // Validated props using $derived to avoid state_referenced_locally warning
     const validatedItemId = $derived.by(() => {
@@ -839,7 +840,10 @@
     });
 
     $effect(() => {
-        if (filterText !== previousFilterText) setupFilterText();
+        if (filterText !== lastFilterText) {
+            setupFilterText();
+            lastFilterText = filterText;
+        }
     });
 
     $effect(() => {
